@@ -1,0 +1,11 @@
+NetworkTrail
+
+This product includes components from Pulse (https://github.com/kean/Pulse).
+
+Pulse
+Copyright (c) 2020-2026 Alexander Grebenyuk (github.com/kean)
+MIT License
+
+Portions of the Pulse remote logging wire protocol are implemented in
+NetworkTrailWire for compatibility with Pulse's RemoteLogger client.
+See Sources/NetworkTrailWire for those files.
