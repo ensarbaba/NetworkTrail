@@ -8,26 +8,56 @@ import Pulse
 /// If `passcode` is nil or empty, connections are plain TCP. If it is set, both sides use Pulse’s
 /// pre-shared-key TLS (same password the phone types in). This is not a custom probe.
 public struct PulseListenerConfiguration: Sendable {
-    /// Bonjour instance name (what the phone lists), not the service type.
+    /// Bonjour instance name (this Mac), not the service type. Two Macs must use different names.
     public var serviceName: String
     /// Optional Pulse shared password. Nil means no TLS.
     public var passcode: String?
 
-    /// Default name is `"NetworkTrail"`. Pass a passcode only if the phone is also using one.
-    public init(serviceName: String = "NetworkTrail", passcode: String? = nil) {
+    /// Default instance name is `NetworkTrail (<this Mac>)` so two computers are two servers.
+    /// Pass `serviceName` to override. Pass a passcode only if the phone is also using one.
+    public init(serviceName: String = PulseListenerConfiguration.defaultServiceName(), passcode: String? = nil) {
         self.serviceName = serviceName
         self.passcode = passcode
+    }
+
+    /// Unique default: `NetworkTrail (iMac)` style. Service type stays `_pulse._tcp`; the phone still picks one Mac.
+    public static func defaultServiceName() -> String {
+        let raw = Host.current().localizedName?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let host: String
+        if let raw, !raw.isEmpty {
+            host = raw
+        } else {
+            let hostname = ProcessInfo.processInfo.hostName.trimmingCharacters(in: .whitespacesAndNewlines)
+            host = hostname.isEmpty ? "Mac" : hostname
+        }
+        return bonjourInstanceName(hostName: host)
+    }
+
+    /// DNS-SD instance names are at most 63 bytes. Keep the `NetworkTrail (…)` shape and shorten the host part.
+    static func bonjourInstanceName(hostName: String) -> String {
+        let prefix = "NetworkTrail ("
+        let suffix = ")"
+        let budget = 63 - prefix.utf8.count - suffix.utf8.count
+        var host = hostName.isEmpty ? "Mac" : hostName
+        while host.utf8.count > max(1, budget), host.count > 1 {
+            host.removeLast()
+        }
+        if host.utf8.count > max(1, budget) {
+            host = "Mac"
+        }
+        return prefix + host + suffix
     }
 }
 
 /// Mac-side Pulse remote logger: advertise on Bonjour, accept TCP, decode Pulse packets, notify the UI.
 ///
-/// `_pulse._tcp` is the Bonjour service type Pulse’s phone `RemoteLogger` already looks for.
+/// Service type is always `_pulse._tcp` (what Pulse’s phone `RemoteLogger` looks for). The instance
+/// name is per Mac, so two inspectors on one network show up as two servers and the phone picks one.
 /// We do not invent a new transport. Inbound bytes go through `PulsePacketCodec.decode`;
 /// hello/ping/resume replies go through `PulsePacketCodec.encode`.
 @MainActor
 public final class PulseListenerServer: ObservableObject {
-    /// Bonjour service type: `"_pulse._tcp"`. The name next to it comes from `serviceName`.
+    /// Shared Bonjour service type `"_pulse._tcp"`. Instance name is `configuration.serviceName`.
     public static let serviceType = "_pulse._tcp"
     /// Version string we put in our hello reply so the phone knows we speak protocol 4.
     static let protocolVersionString = "4.0.0"
@@ -52,7 +82,7 @@ public final class PulseListenerServer: ObservableObject {
         self.onEvent = onEvent
     }
 
-    /// Advertise `_pulse._tcp` on the local network and accept incoming TCP (or Pulse PSK TLS) connections.
+    /// Advertise `_pulse._tcp` under this Mac’s instance name and accept TCP (or Pulse PSK TLS).
     /// Safe to call twice: the second call is ignored while a listener already exists.
     public func start() {
         guard listener == nil else { return }
