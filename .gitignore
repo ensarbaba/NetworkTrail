@@ -4,6 +4,8 @@
 DerivedData/
 *.xcuserstate
 xcuserdata/
+**/*.xcodeproj/project.xcworkspace/
+**/*.xcworkspace/xcshareddata/swiftpm/
 *.hmap
 *.ipa
 *.dSYM.zip
