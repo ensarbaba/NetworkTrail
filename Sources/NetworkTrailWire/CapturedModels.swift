@@ -51,8 +51,8 @@ public struct CapturedRequest: Identifiable, Hashable, Sendable {
     }
 }
 
-/// News from the Bonjour listener for the Mac app to apply: devices, requests, or listener health.
-public enum InspectorStoreEvent: Sendable {
+/// News from the Bonjour listener for `SessionStore`: devices, requests, or listener health.
+public enum SessionEvent: Sendable {
     /// A device connected.
     case clientConnected(CapturedClient)
     /// The device with this id disconnected.

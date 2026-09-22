@@ -70,13 +70,13 @@ public final class PulseListenerServer: ObservableObject {
     private let configuration: PulseListenerConfiguration
     private var listener: NWListener?
     private var connections: [ObjectIdentifier: ClientConnection] = [:]
-    private let onEvent: (@Sendable (InspectorStoreEvent) -> Void)?
+    private let onEvent: (@Sendable (SessionEvent) -> Void)?
 
     /// - Parameter onEvent: Called when a device connects/drops, a request row changes, or the listener
-    ///   itself is ready or failed. The Mac UI (`InspectorStore`) is the usual listener.
+    ///   itself is ready or failed. The Mac UI (`SessionStore`) is the usual listener.
     public init(
         configuration: PulseListenerConfiguration = .init(),
-        onEvent: (@Sendable (InspectorStoreEvent) -> Void)? = nil
+        onEvent: (@Sendable (SessionEvent) -> Void)? = nil
     ) {
         self.configuration = configuration
         self.onEvent = onEvent
@@ -183,10 +183,10 @@ public final class PulseListenerServer: ObservableObject {
 /// Progress packets (`storeEventNetworkTaskProgressUpdated`) are ignored.
 @MainActor
 private final class ClientConnection {
-    /// Either the socket died, or we have an inspector event to forward.
+    /// Either the socket died, or we have a `SessionEvent` to forward.
     enum Event {
         case disconnected(NWConnection)
-        case inspector(InspectorStoreEvent)
+        case inspector(SessionEvent)
     }
 
     private let connection: NWConnection
