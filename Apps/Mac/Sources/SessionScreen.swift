@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import NetworkTrailWire
 
@@ -36,6 +37,11 @@ private struct SidebarView: View {
                         .foregroundStyle(.red)
                 }
             }
+            Section("Simulator") {
+                Button("Copy snippet — iOS Simulator needs no Swift package") {
+                    copySimulatorSnippet()
+                }
+            }
             Section("Devices") {
                 if store.clients.isEmpty {
                     Text("No device connected")
@@ -66,6 +72,12 @@ private struct SidebarView: View {
                     .padding(.vertical, 8)
             }
         }
+    }
+
+    /// Writes `SimulatorSnippet.source` to the general pasteboard.
+    private func copySimulatorSnippet() {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(SimulatorSnippet.source, forType: .string)
     }
 }
 
