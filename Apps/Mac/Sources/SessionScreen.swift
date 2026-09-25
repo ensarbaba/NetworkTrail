@@ -56,6 +56,16 @@ private struct SidebarView: View {
         }
         .listStyle(.sidebar)
         .frame(minWidth: 220)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if let version = releaseVersionString() {
+                Text(version)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+            }
+        }
     }
 }
 
@@ -140,4 +150,13 @@ struct EmptyStateView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()
     }
+}
+
+/// Marketing version from `CFBundleShortVersionString`. Nil when missing or empty (`swift run` has no release plist).
+func releaseVersionString(from bundle: Bundle = .main) -> String? {
+    guard let raw = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String else {
+        return nil
+    }
+    let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+    return trimmed.isEmpty ? nil : trimmed
 }
