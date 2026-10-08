@@ -5,6 +5,9 @@
       location = "group:Package.swift">
    </FileRef>
    <FileRef
+      location = "group:NetworkTrailDebug/NetworkTrailDebug.xcodeproj">
+   </FileRef>
+   <FileRef
       location = "group:DemoApp/DemoApp.xcodeproj">
    </FileRef>
 </Workspace>

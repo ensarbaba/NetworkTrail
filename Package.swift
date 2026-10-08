@@ -10,6 +10,7 @@ let package = Package(
     products: [
         .library(name: "NetworkTrailSDK", targets: ["NetworkTrailSDK"]),
         .library(name: "NetworkTrailWire", targets: ["NetworkTrailWire"]),
+        .library(name: "NetworkTrailDebug", type: .dynamic, targets: ["NetworkTrailDebug"]),
         .executable(name: "NetworkTrailMac", targets: ["NetworkTrailMac"]),
     ],
     dependencies: [
@@ -27,6 +28,16 @@ let package = Package(
             dependencies: [
                 .product(name: "Pulse", package: "Pulse"),
                 .product(name: "PulseProxy", package: "Pulse"),
+            ]
+        ),
+        .target(
+            name: "NetworkTrailDebug",
+            dependencies: [
+                "NetworkTrailSDK",
+            ],
+            exclude: [
+                "NetworkTrailDebugLoader.m",
+                "include",
             ]
         ),
         .executableTarget(
