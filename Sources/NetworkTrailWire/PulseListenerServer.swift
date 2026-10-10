@@ -91,7 +91,10 @@ public final class PulseListenerServer: ObservableObject {
 
         do {
             let parameters = makeParameters()
-            let listener = try NWListener(using: parameters)
+            let listener = try NWListener(
+                using: parameters,
+                on: NWEndpoint.Port(rawValue: LocalhostEndpoint.port)!
+            )
             listener.service = NWListener.Service(
                 name: configuration.serviceName,
                 type: Self.serviceType
