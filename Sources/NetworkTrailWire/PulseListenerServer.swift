@@ -1,6 +1,7 @@
 import CryptoKit
 import Foundation
 import Network
+import NetworkTrailProtocol
 import Pulse
 
 /// Settings for the Mac listener: the name shown on the local network, and an optional shared password.

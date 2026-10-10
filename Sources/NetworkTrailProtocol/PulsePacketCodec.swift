@@ -4,7 +4,7 @@ import Foundation
 import Pulse
 
 /// One-byte labels for each kind of message on the wire.
-enum PulsePacketCode: UInt8 {
+package enum PulsePacketCode: UInt8 {
     /// Phone introducing itself.
     case clientHello = 0
     /// Mac answering the hello.
@@ -34,17 +34,17 @@ enum PulsePacketParsingError: Error {
 }
 
 /// One message after the header is stripped: type byte plus uncompressed body.
-struct PulsePacket {
-    let code: UInt8
-    let body: Data
+package struct PulsePacket {
+    package let code: UInt8
+    package let body: Data
 }
 
 /// Turns a type+body into bytes, and pulls one packet out of a receive buffer.
 ///
 /// On the wire a packet is: 1 type byte, 4-byte big-endian length, then a compressed body.
-enum PulsePacketCodec {
+package enum PulsePacketCodec {
     /// Build a packet: compress `body`, then prefix type and length.
-    static func encode(code: UInt8, body: Data) throws -> Data {
+    package static func encode(code: UInt8, body: Data) throws -> Data {
         guard body.count < UInt32.max else {
             throw PulsePacketParsingError.unsupportedContentSize
         }
@@ -57,7 +57,7 @@ enum PulsePacketCodec {
     }
 
     /// Read the next packet from `buffer`. Second value is how many bytes that packet used.
-    static func decode(buffer: Data) throws -> (PulsePacket, Int) {
+    package static func decode(buffer: Data) throws -> (PulsePacket, Int) {
         let headerSize = 5
         guard buffer.count >= headerSize else {
             throw PulsePacketParsingError.notEnoughData
@@ -75,12 +75,16 @@ enum PulsePacketCodec {
 }
 
 /// JSON body of the Mac's hello reply: protocol version string.
-struct PulseServerHello: Codable {
-    let version: String
+package struct PulseServerHello: Codable {
+    package let version: String
+
+    package init(version: String) {
+        self.version = version
+    }
 }
 
 /// Reads a "HTTP call finished" payload: size table, JSON event, then optional request and response bodies.
-enum PulseNetworkMessageCodec {
+package enum PulseNetworkMessageCodec {
     private struct Manifest {
         let messageSize: UInt32
         let requestBodySize: UInt32
@@ -89,7 +93,7 @@ enum PulseNetworkMessageCodec {
     }
 
     /// Decode a completed-task body into Pulse's `NetworkTaskCompleted` event, attaching the raw bodies.
-    static func decode(_ data: Data) throws -> LoggerStore.Event.NetworkTaskCompleted {
+    package static func decode(_ data: Data) throws -> LoggerStore.Event.NetworkTaskCompleted {
         guard data.count >= Manifest.size else {
             throw PulsePacketParsingError.notEnoughData
         }

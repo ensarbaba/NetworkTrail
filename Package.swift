@@ -18,8 +18,15 @@ let package = Package(
     ],
     targets: [
         .target(
+            name: "NetworkTrailProtocol",
+            dependencies: [
+                .product(name: "Pulse", package: "Pulse"),
+            ]
+        ),
+        .target(
             name: "NetworkTrailWire",
             dependencies: [
+                "NetworkTrailProtocol",
                 .product(name: "Pulse", package: "Pulse"),
             ]
         ),
