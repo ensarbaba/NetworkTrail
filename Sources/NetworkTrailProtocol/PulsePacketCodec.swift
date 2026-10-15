@@ -83,13 +83,35 @@ package struct PulseServerHello: Codable {
     }
 }
 
-/// Reads a "HTTP call finished" payload: size table, JSON event, then optional request and response bodies.
+/// Reads and writes a "HTTP call finished" payload: size table, JSON event, then optional request and response bodies.
 package enum PulseNetworkMessageCodec {
     private struct Manifest {
         let messageSize: UInt32
         let requestBodySize: UInt32
         let responseBodySize: UInt32
         static let size = 12
+    }
+
+    /// Encode a completed-task event. The bodies go after the JSON as raw bytes, not inside it.
+    package static func encode(_ event: LoggerStore.Event.NetworkTaskCompleted) throws -> Data {
+        var eventWithoutBodies = event
+        eventWithoutBodies.requestBody = nil
+        eventWithoutBodies.responseBody = nil
+        let message = try JSONEncoder().encode(eventWithoutBodies)
+        let requestBody = event.requestBody ?? Data()
+        let responseBody = event.responseBody ?? Data()
+        guard requestBody.count < UInt32.max, responseBody.count < UInt32.max else {
+            throw PulsePacketParsingError.unsupportedContentSize
+        }
+
+        var data = Data()
+        data.append(Data(UInt32(message.count)))
+        data.append(Data(UInt32(requestBody.count)))
+        data.append(Data(UInt32(responseBody.count)))
+        data.append(message)
+        data.append(requestBody)
+        data.append(responseBody)
+        return data
     }
 
     /// Decode a completed-task body into Pulse's `NetworkTaskCompleted` event, attaching the raw bodies.

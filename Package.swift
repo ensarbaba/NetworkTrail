@@ -55,5 +55,12 @@ let package = Package(
             ],
             path: "Apps/Mac/Sources"
         ),
+        .testTarget(
+            name: "NetworkTrailProtocolTests",
+            dependencies: [
+                "NetworkTrailProtocol",
+                .product(name: "Pulse", package: "Pulse"),
+            ]
+        ),
     ]
 )
