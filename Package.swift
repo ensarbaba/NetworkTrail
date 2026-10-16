@@ -11,7 +11,6 @@ let package = Package(
         .library(name: "NetworkTrailSDK", targets: ["NetworkTrailSDK"]),
         .library(name: "NetworkTrailWire", targets: ["NetworkTrailWire"]),
         .library(name: "NetworkTrailDebug", type: .dynamic, targets: ["NetworkTrailDebug"]),
-        .executable(name: "NetworkTrailMac", targets: ["NetworkTrailMac"]),
     ],
     dependencies: [
         .package(url: "https://github.com/kean/Pulse", from: "5.1.0"),
@@ -47,14 +46,6 @@ let package = Package(
                 "NetworkTrailDebugLoader.m",
                 "include",
             ]
-        ),
-        .executableTarget(
-            name: "NetworkTrailMac",
-            dependencies: [
-                "NetworkTrailWire",
-                .product(name: "Pulse", package: "Pulse"),
-            ],
-            path: "Apps/Mac/Sources"
         ),
         .testTarget(
             name: "NetworkTrailProtocolTests",

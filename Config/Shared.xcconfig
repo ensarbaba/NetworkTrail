@@ -1,4 +1,5 @@
-// Build settings for DemoApp and NetworkTrailDebug. Both projects use this file at project level.
-// Package.swift sets the same iOS minimum for the Swift package, because SwiftPM cannot read .xcconfig files.
+// Build settings for DemoApp, NetworkTrailDebug and NetworkTrailMac. Each project uses this file at project level.
+// Package.swift sets the same minimums for the Swift package, because SwiftPM cannot read .xcconfig files.
 
 IPHONEOS_DEPLOYMENT_TARGET = 17.0
+MACOSX_DEPLOYMENT_TARGET = 13.0
