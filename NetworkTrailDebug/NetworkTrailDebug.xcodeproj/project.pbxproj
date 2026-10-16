@@ -14,6 +14,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		D1E2F30000000013 /* Shared.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Shared.xcconfig; path = ../Config/Shared.xcconfig; sourceTree = SOURCE_ROOT; };
 		D1E2F30000000010 /* NetworkTrailDebug.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkTrailDebug.swift; sourceTree = "<group>"; };
 		D1E2F30000000011 /* NetworkTrailDebugLoader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NetworkTrailDebugLoader.m; sourceTree = "<group>"; };
 		D1E2F30000000012 /* NetworkTrailDebug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = NetworkTrailDebug.h; path = include/NetworkTrailDebug.h; sourceTree = "<group>"; };
@@ -37,6 +38,7 @@
 			children = (
 				D1E2F30000000041 /* NetworkTrailDebug */,
 				D1E2F30000000042 /* Products */,
+				D1E2F30000000013 /* Shared.xcconfig */,
 			);
 			sourceTree = "<group>";
 		};
@@ -151,7 +153,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundlePackageType = FMWK;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -181,7 +182,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundlePackageType = FMWK;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -199,6 +199,7 @@
 		};
 		D1E2F30000000081 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = D1E2F30000000013 /* Shared.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_MODULES = YES;
@@ -211,7 +212,6 @@
 					"DEBUG=1",
 					"$(inherited)",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
@@ -221,13 +221,13 @@
 		};
 		D1E2F30000000082 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = D1E2F30000000013 /* Shared.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;

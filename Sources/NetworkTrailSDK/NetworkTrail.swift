@@ -1,36 +1,44 @@
 #if DEBUG
-import Foundation
 import Pulse
 import PulseProxy
 
-/// Debug-only phone API. Call `NetworkTrail.start()` from your app; do not ship this in Release.
+/// Debug-only API: captures `URLSession` traffic and sends it to the NetworkTrail Mac app.
 ///
-/// There is no custom probe. Pulse captures `URLSession` (via PulseProxy) and Pulse `RemoteLogger`
-/// finds a Mac advertising `_pulse._tcp`. The Mac UI is a separate process.
+/// Pulse captures the traffic (`PulseProxy`). In the Simulator, `LocalhostSender` sends it to the Mac app
+/// on `127.0.0.1`. On a device, Pulse `RemoteLogger` finds the Mac app through Bonjour (`_pulse._tcp`).
+@MainActor
 public enum NetworkTrail {
-    private static var didStart = false
+    /// `NetworkLogger.enableProxy()` swizzles `URLSession` and must run only once per process.
+    private static var isProxyEnabled = false
+    #if targetEnvironment(simulator)
+    private static var senderTask: Task<Void, Never>?
+    #endif
 
-    /// Turn on Pulse `URLSession` capture and Pulse RemoteLogger so this phone can find the Mac.
-    ///
-    /// `NetworkLogger.enableProxy()` swizzles `URLSession` (DEBUG only). Then `RemoteLogger` is
-    /// enabled with automatic connection: the phone browses `_pulse._tcp` and connects to one
-    /// NetworkTrail Mac. Safe to call twice; the second call does nothing.
-    @MainActor
+    /// Start capture and sending. Safe to call again, also after `stop()`.
     public static func start() {
-        guard !didStart else { return }
-        didStart = true
-
-        NetworkLogger.enableProxy()
+        if !isProxyEnabled {
+            NetworkLogger.enableProxy()
+            isProxyEnabled = true
+        }
+        #if targetEnvironment(simulator)
+        guard senderTask == nil else { return }
+        senderTask = Task { await LocalhostSender().run() }
+        #else
         let remote = RemoteLogger.shared
         remote.isAutomaticConnectionEnabled = true
         remote.initialize(store: .shared)
         remote.enable()
+        #endif
     }
 
-    /// Stop sending events to the Mac. Local Pulse capture may keep running in this process.
-    @MainActor
+    /// Stop sending to the Mac app. The `URLSession` capture keeps running in this process.
     public static func stop() {
+        #if targetEnvironment(simulator)
+        senderTask?.cancel()
+        senderTask = nil
+        #else
         RemoteLogger.shared.disable()
+        #endif
     }
 }
 #endif

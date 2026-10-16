@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "NetworkTrail",
     platforms: [
-        .iOS(.v15),
+        .iOS(.v17),
         .macOS(.v13),
     ],
     products: [
@@ -33,6 +33,7 @@ let package = Package(
         .target(
             name: "NetworkTrailSDK",
             dependencies: [
+                "NetworkTrailProtocol",
                 .product(name: "Pulse", package: "Pulse"),
                 .product(name: "PulseProxy", package: "Pulse"),
             ]
