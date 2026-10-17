@@ -5,9 +5,9 @@ import NetworkTrailWire
 /// Right-hand pane: one selected HTTP call — URL, headers, pretty body, copy, cURL.
 ///
 /// Reads `store.selectedRequest`. Bodies go through `JSONFormatter`. cURL uses `CurlBuilder`.
-/// Our own SwiftUI; not Pulse’s console UI. macOS 13 / `ObservableObject` store.
+/// Our own SwiftUI; not Pulse’s console UI.
 struct RequestDetailView: View {
-    @EnvironmentObject private var store: SessionStore
+    @Environment(SessionStore.self) private var store
     @State private var wrapLines = true
     @State private var selectedBodyTab = 0
 

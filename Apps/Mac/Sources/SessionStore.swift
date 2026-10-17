@@ -1,23 +1,25 @@
 import Foundation
 import NetworkTrailWire
+import Observation
 
 /// `SessionStore` holds live Mac UI state: connected phones, HTTP rows, selection, and the filter box.
 ///
 /// Owns a `PulseListenerServer` and applies each `SessionEvent`. Nothing is saved to disk.
-/// `ObservableObject` so SwiftUI on macOS 13 can observe `@Published` fields.
+/// SwiftUI views update when a property that they read changes.
+@Observable
 @MainActor
-final class SessionStore: ObservableObject {
+final class SessionStore {
     /// Phones that have said hello (newest first).
-    @Published var clients: [CapturedClient] = []
+    var clients: [CapturedClient] = []
     /// HTTP rows from every client; the list view usually shows `filteredRequests`.
-    @Published var requests: [CapturedRequest] = []
-    @Published var selectedClientID: UUID?
-    @Published var selectedRequestID: UUID?
+    var requests: [CapturedRequest] = []
+    var selectedClientID: UUID?
+    var selectedRequestID: UUID?
     /// Filter box: matches URL, method, or status code (case-insensitive URL/method).
-    @Published var filterText = ""
-    @Published var isListening = false
-    @Published var statusMessage = "Starting listener…"
-    @Published var lastError: String?
+    var filterText = ""
+    var isListening = false
+    var statusMessage = "Starting listener…"
+    var lastError: String?
 
     private var server: PulseListenerServer?
 

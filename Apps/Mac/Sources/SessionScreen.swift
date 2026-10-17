@@ -4,10 +4,8 @@ import NetworkTrailWire
 
 /// `SessionScreen` is the three-column Mac window: devices, request table, detail pane. Reads `SessionStore`.
 ///
-/// Our SwiftUI on macOS 13, not Pulse’s console. No color-scheme override — follows the system.
+/// Our SwiftUI, not Pulse’s console. No color-scheme override — follows the system.
 struct SessionScreen: View {
-    @EnvironmentObject private var store: SessionStore
-
     var body: some View {
         NavigationSplitView {
             SidebarView()
@@ -22,9 +20,10 @@ struct SessionScreen: View {
 
 /// Listener status plus the list of phones that have connected.
 private struct SidebarView: View {
-    @EnvironmentObject private var store: SessionStore
+    @Environment(SessionStore.self) private var store
 
     var body: some View {
+        @Bindable var store = store
         List(selection: $store.selectedClientID) {
             Section("Status") {
                 Label(store.isListening ? "Listening" : "Idle", systemImage: store.isListening ? "antenna.radiowaves.left.and.right" : "antenna.radiowaves.left.and.right.slash")
@@ -83,9 +82,10 @@ private struct SidebarView: View {
 
 /// Filter box and the live request table (`SessionStore.filteredRequests`), or an empty state.
 private struct RequestListView: View {
-    @EnvironmentObject private var store: SessionStore
+    @Environment(SessionStore.self) private var store
 
     var body: some View {
+        @Bindable var store = store
         VStack(spacing: 0) {
             HStack {
                 TextField("Filter URL, method, status", text: $store.filterText)
