@@ -45,9 +45,10 @@ struct RequestDetailView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         } else {
-            EmptyStateView(
-                title: "No request selected",
-                message: "Choose a row in the request list to inspect headers and bodies."
+            ContentUnavailableView(
+                "No request selected",
+                systemImage: "doc.text.magnifyingglass",
+                description: Text("Choose a row in the request list to inspect headers and bodies.")
             )
         }
     }

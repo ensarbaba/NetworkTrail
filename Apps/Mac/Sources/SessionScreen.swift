@@ -97,14 +97,16 @@ private struct RequestListView: View {
             .padding()
 
             if store.clients.isEmpty {
-                EmptyStateView(
-                    title: "Waiting for a device",
-                    message: "Run the demo iOS app in the Simulator with the Debug SDK enabled. Traffic appears here live."
+                ContentUnavailableView(
+                    "Waiting for a device",
+                    systemImage: "iphone",
+                    description: Text("Paste the Simulator snippet into your iOS app and run a Debug build in the Simulator. Traffic appears here live.")
                 )
             } else if store.filteredRequests.isEmpty {
-                EmptyStateView(
-                    title: "No requests yet",
-                    message: "Trigger HTTP calls from the connected app."
+                ContentUnavailableView(
+                    "No requests yet",
+                    systemImage: "network",
+                    description: Text("Trigger HTTP calls from the connected app.")
                 )
             } else {
                 Table(store.filteredRequests, selection: $store.selectedRequestID) {
@@ -143,24 +145,6 @@ private struct RequestListView: View {
     private func durationLabel(for request: CapturedRequest) -> String {
         guard let duration = request.duration else { return "—" }
         return String(format: "%.0f ms", duration * 1000)
-    }
-}
-
-/// Centered title + message used when there is no device or no matching rows.
-struct EmptyStateView: View {
-    let title: String
-    let message: String
-
-    var body: some View {
-        VStack(spacing: 8) {
-            Text(title).font(.title3)
-            Text(message)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: 360)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
     }
 }
 
