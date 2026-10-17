@@ -5,7 +5,7 @@ let package = Package(
     name: "NetworkTrail",
     platforms: [
         .iOS(.v17),
-        .macOS(.v13),
+        .macOS(.v14),
     ],
     products: [
         .library(name: "NetworkTrailSDK", targets: ["NetworkTrailSDK"]),

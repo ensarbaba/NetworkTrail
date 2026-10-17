@@ -2,4 +2,4 @@
 // Package.swift sets the same minimums for the Swift package, because SwiftPM cannot read .xcconfig files.
 
 IPHONEOS_DEPLOYMENT_TARGET = 17.0
-MACOSX_DEPLOYMENT_TARGET = 13.0
+MACOSX_DEPLOYMENT_TARGET = 14.0
