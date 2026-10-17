@@ -1,16 +1,15 @@
-/// Swift the developer pastes into an iOS app so the Simulator can load NetworkTrailDebug without a Swift package.
+/// Swift that the developer pastes once into the iOS app. No Swift package, no Info.plist change.
 ///
-/// Does not call `NetworkTrail.start()`.
+/// In a Debug build in the Simulator, the snippet loads `NetworkTrailDebug.framework` from NetworkTrail.app.
+/// The framework starts the capture by itself when it loads. Release builds and devices skip the snippet.
 enum SimulatorSnippet {
-    /// Info.plist Bonjour comment plus the `#if DEBUG` `Bundle.load()` calls.
+    /// Fixed path, the same on every Mac, so a team can share the snippet. NetworkTrail.app must be in /Applications.
+    static let frameworkPath = "/Applications/NetworkTrail.app/Contents/Frameworks/NetworkTrailDebug.framework"
+
     static let source = """
-        // Info.plist also needs NSLocalNetworkUsageDescription and NSBonjourServices set to _pulse._tcp.
-        #if DEBUG
-        let app = URL(fileURLWithPath: "/Applications/NetworkTrail.app")
-        let framework = app.appendingPathComponent(
-            "Contents/Frameworks/NetworkTrailDebug.framework"
-        )
-        Bundle(url: framework)?.load()
+        // NetworkTrail: run once at launch, for example in App.init or application(_:didFinishLaunchingWithOptions:).
+        #if DEBUG && targetEnvironment(simulator)
+        Bundle(path: "\(frameworkPath)")?.load()
         #endif
         """
 }

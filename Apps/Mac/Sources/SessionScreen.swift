@@ -38,7 +38,7 @@ private struct SidebarView: View {
                 }
             }
             Section("Simulator") {
-                Button("Copy snippet — iOS Simulator needs no Swift package") {
+                Button("Copy iOS Simulator snippet") {
                     copySimulatorSnippet()
                 }
             }
