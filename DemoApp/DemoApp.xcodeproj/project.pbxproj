@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		A1B1C1D100000001 /* DemoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B1C1D100000010 /* DemoApp.swift */; };
 		A1B1C1D100000002 /* DemoContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B1C1D100000011 /* DemoContentView.swift */; };
-		A1B1C1D100000003 /* NetworkTrailSDK in Frameworks */ = {isa = PBXBuildFile; productRef = A1B1C1D100000090 /* NetworkTrailSDK */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -25,7 +24,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A1B1C1D100000003 /* NetworkTrailSDK in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -74,9 +72,6 @@
 			dependencies = (
 			);
 			name = DemoApp;
-			packageProductDependencies = (
-				A1B1C1D100000090 /* NetworkTrailSDK */,
-			);
 			productName = DemoApp;
 			productReference = A1B1C1D100000020 /* DemoApp.app */;
 			productType = "com.apple.product-type.application";
@@ -100,9 +95,6 @@
 				Base,
 			);
 			mainGroup = A1B1C1D100000040;
-			packageReferences = (
-				A1B1C1D100000091 /* XCLocalSwiftPackageReference ".." */,
-			);
 			productRefGroup = A1B1C1D100000042 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -223,20 +215,6 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCLocalSwiftPackageReference section */
-		A1B1C1D100000091 /* XCLocalSwiftPackageReference ".." */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ..;
-		};
-/* End XCLocalSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		A1B1C1D100000090 /* NetworkTrailSDK */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = A1B1C1D100000091 /* XCLocalSwiftPackageReference ".." */;
-			productName = NetworkTrailSDK;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A1B1C1D100000070 /* Project object */;
 }

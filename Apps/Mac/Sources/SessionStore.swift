@@ -48,7 +48,7 @@ final class SessionStore {
         switch event {
         case .listenerReady:
             isListening = true
-            statusMessage = "Listening for devices on Bonjour (_pulse._tcp)"
+            statusMessage = "Listening for iOS Simulator apps"
             lastError = nil
         case .listenerFailed(let message):
             isListening = false

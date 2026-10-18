@@ -1,16 +1,13 @@
 import SwiftUI
-#if DEBUG
-import NetworkTrailSDK
-#endif
 
-/// Sample iOS app in this repo. DEBUG builds call `NetworkTrail.start()` so traffic can reach the Mac.
+/// Sample iOS app in this repo. It uses NetworkTrail only through the Simulator snippet:
+/// no Swift package and no Info.plist change.
 @main
 struct DemoApp: App {
     init() {
-        #if DEBUG
-        Task { @MainActor in
-            NetworkTrail.start()
-        }
+        // NetworkTrail: run once at launch, for example in App.init or application(_:didFinishLaunchingWithOptions:).
+        #if DEBUG && targetEnvironment(simulator)
+        Bundle(path: "/Applications/NetworkTrail.app/Contents/Frameworks/NetworkTrailDebug.framework")?.load()
         #endif
     }
 

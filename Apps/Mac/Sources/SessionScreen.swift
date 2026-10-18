@@ -36,20 +36,20 @@ private struct SidebarView: View {
                         .foregroundStyle(.red)
                 }
             }
-            Section("Simulator") {
+            Section("Setup") {
                 Button("Copy iOS Simulator snippet") {
                     copySimulatorSnippet()
                 }
             }
-            Section("Devices") {
+            Section("Connected apps") {
                 if store.clients.isEmpty {
-                    Text("No device connected")
+                    Text("No app connected")
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(store.clients) { client in
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(client.deviceName).font(.headline)
-                            Text(client.appName).font(.subheadline)
+                            Text(client.appName).font(.headline)
+                            Text("\(client.deviceName) · iOS \(client.systemVersion)").font(.subheadline)
                             Text(client.bundleIdentifier)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -98,7 +98,7 @@ private struct RequestListView: View {
 
             if store.clients.isEmpty {
                 ContentUnavailableView(
-                    "Waiting for a device",
+                    "Waiting for an app",
                     systemImage: "iphone",
                     description: Text("Paste the Simulator snippet into your iOS app and run a Debug build in the Simulator. Traffic appears here live.")
                 )
