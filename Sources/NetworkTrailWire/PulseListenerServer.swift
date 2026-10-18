@@ -277,6 +277,9 @@ private final class ClientConnection {
     }
 
     /// Handshake, heartbeat, and HTTP rows. Unknown codes and progress updates fall through `default` and are ignored.
+    ///
+    /// Method and URL come from `originalRequest`: what the app asked for, before any redirect.
+    /// Headers come from `currentRequest`: what was sent, including `httpAdditionalHeaders` of the session.
     private func handle(packet: PulsePacket) {
         guard let code = PulsePacketCode(rawValue: packet.code) else { return }
         switch code {
@@ -295,7 +298,7 @@ private final class ClientConnection {
                     url: event.originalRequest.url?.absoluteString ?? "",
                     statusCode: nil,
                     duration: nil,
-                    requestHeaders: event.originalRequest.headers ?? [:],
+                    requestHeaders: (event.currentRequest ?? event.originalRequest).headers ?? [:],
                     responseHeaders: [:],
                     requestBody: nil,
                     responseBody: nil,
@@ -317,7 +320,7 @@ private final class ClientConnection {
                     url: event.originalRequest.url?.absoluteString ?? "",
                     statusCode: status,
                     duration: duration,
-                    requestHeaders: event.originalRequest.headers ?? [:],
+                    requestHeaders: (event.currentRequest ?? event.originalRequest).headers ?? [:],
                     responseHeaders: event.response?.headers ?? [:],
                     requestBody: event.requestBody,
                     responseBody: event.responseBody,
