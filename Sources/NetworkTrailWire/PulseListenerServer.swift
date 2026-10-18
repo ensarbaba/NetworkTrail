@@ -123,7 +123,7 @@ public final class PulseListenerServer: ObservableObject {
         listener = nil
         isListening = false
         for connection in connections.values {
-            connection.cancel()
+            connection.close()
         }
         connections.removeAll()
     }
@@ -198,6 +198,7 @@ private final class ClientConnection {
     private var buffer = Data()
     private var clientID: UUID?
     private var pingTask: Task<Void, Never>?
+    private var isClosed = false
 
     init(connection: NWConnection, onEvent: @escaping (Event) -> Void) {
         self.connection = connection
@@ -215,19 +216,23 @@ private final class ClientConnection {
         receive()
     }
 
-    /// Stop pings and cancel the socket.
-    func cancel() {
+    /// The only exit path, for every reason the connection ends: stop the pings, cancel the socket,
+    /// and report the disconnect. Runs once; later calls do nothing.
+    func close() {
+        guard !isClosed else { return }
+        isClosed = true
         pingTask?.cancel()
         connection.cancel()
+        if let clientID {
+            onEvent(.inspector(.clientDisconnected(clientID)))
+        }
+        onEvent(.disconnected(connection))
     }
 
     private func handleState(_ state: NWConnection.State) {
         switch state {
         case .failed, .cancelled:
-            if let clientID {
-                onEvent(.inspector(.clientDisconnected(clientID)))
-            }
-            onEvent(.disconnected(connection))
+            close()
         default:
             break
         }
@@ -242,7 +247,7 @@ private final class ClientConnection {
                     self.process(data: data)
                 }
                 if isComplete || error != nil {
-                    self.onEvent(.disconnected(self.connection))
+                    self.close()
                 } else {
                     self.receive()
                 }
@@ -357,10 +362,9 @@ private final class ClientConnection {
         pingTask?.cancel()
         pingTask = Task { [weak self] in
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 2_000_000_000)
-                await MainActor.run {
-                    self?.send(code: .ping)
-                }
+                try? await Task.sleep(for: .seconds(2))
+                guard let self, !Task.isCancelled else { return }
+                self.send(code: .ping)
             }
         }
     }
