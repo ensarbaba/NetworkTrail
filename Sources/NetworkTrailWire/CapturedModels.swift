@@ -49,6 +49,14 @@ public struct CapturedRequest: Identifiable, Hashable, Sendable {
     public var host: String {
         URL(string: url)?.host ?? url
     }
+
+    /// Path and query of `url` as sent, for example `/get?probe=1`, or the full text if it has no host.
+    public var pathAndQuery: String {
+        guard let components = URLComponents(string: url), components.host != nil else { return url }
+        let path = components.percentEncodedPath.isEmpty ? "/" : components.percentEncodedPath
+        guard let query = components.percentEncodedQuery else { return path }
+        return path + "?" + query
+    }
 }
 
 /// News from the Bonjour listener for `SessionStore`: devices, requests, or listener health.

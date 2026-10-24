@@ -48,6 +48,10 @@ let package = Package(
             ]
         ),
         .testTarget(
+            name: "NetworkTrailWireTests",
+            dependencies: ["NetworkTrailWire"]
+        ),
+        .testTarget(
             name: "NetworkTrailProtocolTests",
             dependencies: [
                 "NetworkTrailProtocol",

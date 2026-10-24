@@ -1,4 +1,3 @@
-import AppKit
 import SwiftUI
 import NetworkTrailWire
 
@@ -38,7 +37,7 @@ private struct SidebarView: View {
             }
             Section("Setup") {
                 Button("Copy iOS Simulator snippet") {
-                    copySimulatorSnippet()
+                    Pasteboard.copy(SimulatorSnippet.source)
                 }
             }
             Section("Connected apps") {
@@ -72,12 +71,6 @@ private struct SidebarView: View {
             }
         }
     }
-
-    /// Writes `SimulatorSnippet.source` to the general pasteboard.
-    private func copySimulatorSnippet() {
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(SimulatorSnippet.source, forType: .string)
-    }
 }
 
 /// Filter box and the live request table (`SessionStore.filteredRequests`), or an empty state.
@@ -110,19 +103,27 @@ private struct RequestListView: View {
                 )
             } else {
                 Table(store.filteredRequests, selection: $store.selectedRequestID) {
-                    TableColumn("Method") { request in
-                        Text(request.method)
-                            .fontWeight(.semibold)
-                    }
-                    .width(70)
                     TableColumn("Status") { request in
                         Text(statusLabel(for: request))
+                            .fontWeight(.semibold)
+                            .foregroundStyle(statusColor(for: request))
+                            .monospacedDigit()
                     }
                     .width(60)
-                    TableColumn("URL") { request in
-                        Text(request.url)
+                    TableColumn("Method") { request in
+                        Text(request.method)
+                    }
+                    .width(70)
+                    TableColumn("Host") { request in
+                        Text(request.host)
+                            .lineLimit(1)
+                    }
+                    .width(min: 100, ideal: 150)
+                    TableColumn("Path") { request in
+                        Text(request.pathAndQuery)
                             .lineLimit(1)
                             .truncationMode(.middle)
+                            .help(request.url)
                     }
                     TableColumn("Time") { request in
                         Text(durationLabel(for: request))
@@ -130,21 +131,42 @@ private struct RequestListView: View {
                     }
                     .width(70)
                 }
+                .contextMenu(forSelectionType: CapturedRequest.ID.self) { ids in
+                    if ids.count == 1, let request = store.requests.first(where: { ids.contains($0.id) }) {
+                        Button("Copy URL") { Pasteboard.copy(request.url) }
+                        Button("Copy as cURL") { Pasteboard.copy(CurlBuilder.make(from: request)) }
+                    }
+                }
             }
         }
         .frame(minWidth: 420)
     }
 
-    /// Status code, an em dash if finished with no code, or an ellipsis while in flight.
+    /// Status code, "Failed" for a call that ended with an error and no response, "—" if finished with no code,
+    /// or an ellipsis while in flight.
     private func statusLabel(for request: CapturedRequest) -> String {
         if let code = request.statusCode { return String(code) }
+        if request.errorDescription != nil { return "Failed" }
         return request.isComplete ? "—" : "…"
     }
 
-    /// Total duration in milliseconds, or an em dash if unknown.
+    /// Red for errors and 5xx, orange for 4xx, green for 2xx; secondary for 3xx, unknown, and in flight.
+    private func statusColor(for request: CapturedRequest) -> Color {
+        if request.errorDescription != nil { return .red }
+        switch request.statusCode {
+        case .some(200..<300): return .green
+        case .some(400..<500): return .orange
+        case .some(500...): return .red
+        default: return .secondary
+        }
+    }
+
+    /// Milliseconds below one second (`556 ms`), seconds from one second (`1.1 s`), or an em dash if unknown.
     private func durationLabel(for request: CapturedRequest) -> String {
         guard let duration = request.duration else { return "—" }
-        return String(format: "%.0f ms", duration * 1000)
+        return duration < 1
+            ? String(format: "%.0f ms", duration * 1000)
+            : String(format: "%.1f s", duration)
     }
 }
 

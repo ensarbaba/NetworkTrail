@@ -1,4 +1,3 @@
-import AppKit
 import SwiftUI
 import NetworkTrailWire
 
@@ -61,8 +60,8 @@ struct RequestDetailView: View {
                 .font(.headline)
                 .textSelection(.enabled)
             HStack {
-                Button("Copy URL") { copy(request.url) }
-                Button("Copy as cURL") { copy(CurlBuilder.make(from: request)) }
+                Button("Copy URL") { Pasteboard.copy(request.url) }
+                Button("Copy as cURL") { Pasteboard.copy(CurlBuilder.make(from: request)) }
             }
         }
     }
@@ -96,17 +95,12 @@ struct RequestDetailView: View {
             let text = JSONFormatter.prettyString(from: data, wrap: wrapLines)
             HStack {
                 Spacer()
-                Button("Copy") { copy(text) }
+                Button("Copy") { Pasteboard.copy(text) }
             }
             Text(text)
                 .font(.system(.body, design: .monospaced))
                 .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
-    }
-
-    private func copy(_ string: String) {
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(string, forType: .string)
     }
 }
