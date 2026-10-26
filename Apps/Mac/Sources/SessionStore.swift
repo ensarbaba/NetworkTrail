@@ -61,9 +61,8 @@ final class SessionStore {
                 selectedClientID = client.id
             }
         case .clientDisconnected(let id):
-            clients.removeAll { $0.id == id }
-            if selectedClientID == id {
-                selectedClientID = clients.first?.id
+            if let index = clients.firstIndex(where: { $0.id == id }) {
+                clients[index].isConnected = false
             }
         case .requestUpdated(let request):
             if let index = requests.firstIndex(where: { $0.id == request.id }) {

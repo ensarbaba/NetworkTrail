@@ -40,19 +40,20 @@ private struct SidebarView: View {
                     Pasteboard.copy(SimulatorSnippet.source)
                 }
             }
-            Section("Connected apps") {
+            Section("Apps") {
                 if store.clients.isEmpty {
-                    Text("No app connected")
+                    Text("No app connected yet")
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(store.clients) { client in
                         VStack(alignment: .leading, spacing: 2) {
                             Text(client.appName).font(.headline)
                             Text("\(client.deviceName) · iOS \(client.systemVersion)").font(.subheadline)
-                            Text(client.bundleIdentifier)
+                            Text(client.isConnected ? client.bundleIdentifier : "Disconnected")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
+                        .foregroundStyle(client.isConnected ? .primary : .secondary)
                         .tag(client.id as String?)
                     }
                 }

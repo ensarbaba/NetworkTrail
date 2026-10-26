@@ -10,6 +10,8 @@ public struct CapturedClient: Identifiable, Hashable, Sendable {
     public var bundleIdentifier: String
     public var systemVersion: String
     public var connectedAt: Date
+    /// False after the app disconnects. The app and its requests stay in the session until it connects again.
+    public var isConnected: Bool
 
     /// Creates a client record when a device connects.
     public init(
@@ -18,7 +20,8 @@ public struct CapturedClient: Identifiable, Hashable, Sendable {
         appName: String,
         bundleIdentifier: String,
         systemVersion: String,
-        connectedAt: Date = Date()
+        connectedAt: Date = Date(),
+        isConnected: Bool = true
     ) {
         self.id = id
         self.deviceName = deviceName
@@ -26,6 +29,7 @@ public struct CapturedClient: Identifiable, Hashable, Sendable {
         self.bundleIdentifier = bundleIdentifier
         self.systemVersion = systemVersion
         self.connectedAt = connectedAt
+        self.isConnected = isConnected
     }
 }
 
