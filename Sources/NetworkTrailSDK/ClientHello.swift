@@ -20,7 +20,7 @@ struct ClientHello: Encodable {
         let build: String?
     }
 
-    let deviceId: UUID
+    let deviceId: String
     let deviceInfo: DeviceInfo
     let appInfo: AppInfo
 
@@ -29,14 +29,29 @@ struct ClientHello: Encodable {
         return try? PulsePacketCodec.encode(code: PulsePacketCode.clientHello.rawValue, body: body)
     }
 
+    /// `<bundle ID>|<Simulator ID>`: the same app on the same Simulator sends the same ID in every launch,
+    /// so the Mac app keeps one row for it. Outside the Simulator there is no `SIMULATOR_UDID`,
+    /// so the ID is new for each launch.
+    static let appID: String = {
+        guard let simulatorID = ProcessInfo.processInfo.environment["SIMULATOR_UDID"] else { return UUID().uuidString }
+        return appID(
+            bundleID: Bundle.main.bundleIdentifier ?? ProcessInfo.processInfo.processName,
+            simulatorID: simulatorID
+        )
+    }()
+
+    static func appID(bundleID: String, simulatorID: String) -> String {
+        "\(bundleID)|\(simulatorID)"
+    }
+
     /// Device facts come from the `SIMULATOR_*` environment variables that every Simulator process has.
-    static func current(clientID: UUID) -> ClientHello {
+    static func current() -> ClientHello {
         let environment = ProcessInfo.processInfo.environment
         let version = ProcessInfo.processInfo.operatingSystemVersion
         let model = environment["SIMULATOR_MODEL_IDENTIFIER"] ?? "Simulator"
         let info = Bundle.main.infoDictionary
         return ClientHello(
-            deviceId: clientID,
+            deviceId: appID,
             deviceInfo: DeviceInfo(
                 name: environment["SIMULATOR_DEVICE_NAME"] ?? "iOS Simulator",
                 model: model,

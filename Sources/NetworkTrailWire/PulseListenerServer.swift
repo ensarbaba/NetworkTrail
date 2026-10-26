@@ -196,7 +196,7 @@ private final class ClientConnection {
     private let connection: NWConnection
     private let onEvent: (Event) -> Void
     private var buffer = Data()
-    private var clientID: UUID?
+    private var clientID: String?
     private var pingTask: Task<Void, Never>?
     private var isClosed = false
 
@@ -339,7 +339,7 @@ private final class ClientConnection {
     private func handleClientHello(_ body: Data) {
         struct ClientHello: Codable {
             let version: String?
-            let deviceId: UUID
+            let deviceId: String
             let deviceInfo: LoggerStore.Info.DeviceInfo
             let appInfo: LoggerStore.Info.AppInfo
         }

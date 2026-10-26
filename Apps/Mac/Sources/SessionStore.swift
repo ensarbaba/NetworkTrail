@@ -13,7 +13,7 @@ final class SessionStore {
     var clients: [CapturedClient] = []
     /// HTTP rows from every client; the list view usually shows `filteredRequests`.
     var requests: [CapturedRequest] = []
-    var selectedClientID: UUID?
+    var selectedClientID: String?
     var selectedRequestID: UUID?
     /// Filter box: matches URL, method, or status code (case-insensitive URL/method).
     var filterText = ""

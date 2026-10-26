@@ -19,8 +19,6 @@ actor LocalhostSender {
     private static let retryDelay: Duration = .seconds(2)
     /// Queue for the `NWConnection` callbacks. The callbacks only feed async streams.
     private static let networkQueue = DispatchQueue(label: "NetworkTrail.LocalhostSender")
-    /// One client per app process, also after a restart. The Mac app groups requests by this ID.
-    private static let clientID = UUID()
 
     /// Set only while the connection is ready.
     private var connection: NWConnection?
@@ -52,7 +50,7 @@ actor LocalhostSender {
             if let readyConnection = await NWConnection.openLocalhost(queue: Self.networkQueue) {
                 connection = readyConnection
                 readyConnection.send(
-                    content: ClientHello.current(clientID: Self.clientID).packet,
+                    content: ClientHello.current().packet,
                     completion: .contentProcessed { _ in }
                 )
                 let packets = pendingPackets

@@ -20,7 +20,7 @@ struct CapturedRequestTests {
     private func makeRequest(url: String) -> CapturedRequest {
         CapturedRequest(
             id: UUID(),
-            clientID: UUID(),
+            clientID: "com.example.Demo|SIM-A",
             createdAt: Date(),
             method: "GET",
             url: url,

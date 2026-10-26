@@ -53,7 +53,7 @@ private struct SidebarView: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
-                        .tag(client.id as UUID?)
+                        .tag(client.id as String?)
                     }
                 }
             }

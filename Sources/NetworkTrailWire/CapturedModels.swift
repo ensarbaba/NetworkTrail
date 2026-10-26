@@ -2,7 +2,9 @@ import Foundation
 
 /// A phone or Simulator that connected to the Mac inspector.
 public struct CapturedClient: Identifiable, Hashable, Sendable {
-    public let id: UUID
+    /// The app's ID from its hello. A Simulator app sends `<bundle ID>|<Simulator ID>`, the same in every launch;
+    /// a device that uses Pulse `RemoteLogger` sends its device UUID as text.
+    public let id: String
     public var deviceName: String
     public var appName: String
     public var bundleIdentifier: String
@@ -11,7 +13,7 @@ public struct CapturedClient: Identifiable, Hashable, Sendable {
 
     /// Creates a client record when a device connects.
     public init(
-        id: UUID,
+        id: String,
         deviceName: String,
         appName: String,
         bundleIdentifier: String,
@@ -32,7 +34,7 @@ public struct CapturedClient: Identifiable, Hashable, Sendable {
 /// Status, duration, and bodies are optional because the row can appear before the call finishes.
 public struct CapturedRequest: Identifiable, Hashable, Sendable {
     public let id: UUID
-    public var clientID: UUID
+    public var clientID: String
     public var createdAt: Date
     public var method: String
     public var url: String
@@ -64,7 +66,7 @@ public enum SessionEvent: Sendable {
     /// A device connected.
     case clientConnected(CapturedClient)
     /// The device with this id disconnected.
-    case clientDisconnected(UUID)
+    case clientDisconnected(String)
     /// Insert or replace this request row (in flight or finished).
     case requestUpdated(CapturedRequest)
     /// The listener could not start. Associated value is the error text.
