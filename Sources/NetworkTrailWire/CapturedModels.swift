@@ -2,8 +2,7 @@ import Foundation
 
 /// A phone or Simulator that connected to the Mac inspector.
 public struct CapturedClient: Identifiable, Hashable, Sendable {
-    /// The app's ID from its hello. A Simulator app sends `<bundle ID>|<Simulator ID>`, the same in every launch;
-    /// a device that uses Pulse `RemoteLogger` sends its device UUID as text.
+    /// The app's ID from its hello: `<bundle ID>|<Simulator ID>`, the same in every launch.
     public let id: String
     public var deviceName: String
     public var appName: String
@@ -65,7 +64,7 @@ public struct CapturedRequest: Identifiable, Hashable, Sendable {
     }
 }
 
-/// News from the Bonjour listener for `SessionStore`: devices, requests, or listener health.
+/// News from the listener for `SessionStore`: apps, requests, or listener health.
 public enum SessionEvent: Sendable {
     /// A device connected.
     case clientConnected(CapturedClient)
@@ -73,8 +72,8 @@ public enum SessionEvent: Sendable {
     case clientDisconnected(String)
     /// Insert or replace this request row (in flight or finished).
     case requestUpdated(CapturedRequest)
-    /// The listener could not start. Associated value is the error text.
+    /// The listener cannot accept connections. Associated value is the reason.
     case listenerFailed(String)
-    /// The listener is up and advertising on the local network.
+    /// The listener accepts connections.
     case listenerReady
 }

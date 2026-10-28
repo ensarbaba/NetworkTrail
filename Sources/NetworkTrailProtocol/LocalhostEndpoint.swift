@@ -4,7 +4,6 @@
 package enum LocalhostEndpoint {
     /// IPv4 loopback. Not the name `localhost`, which can resolve to `::1` first.
     package static let host = "127.0.0.1"
-    /// Fixed TCP port of the Mac listener (all interfaces, also advertised on Bonjour).
-    /// The Simulator side connects here without discovery.
+    /// Fixed TCP port of the Mac listener on `host`. The Simulator side connects here without discovery.
     package static let port: UInt16 = 43000
 }

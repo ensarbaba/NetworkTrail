@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Mac app entry: one window, one `SessionStore`, `SessionScreen` as the root view.
 ///
-/// Starts the Bonjour Pulse listener when the window appears. Follows the system appearance.
+/// Starts the listener when the window appears. Follows the system appearance.
 @main
 struct NetworkTrailMacApp: App {
     @State private var store = SessionStore()

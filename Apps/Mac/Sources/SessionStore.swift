@@ -23,7 +23,7 @@ final class SessionStore {
 
     private var server: PulseListenerServer?
 
-    /// Start the Bonjour Pulse listener. Second call does nothing while one is already running.
+    /// Start the listener. Second call does nothing while one is already running.
     func startListening() {
         guard server == nil else { return }
         let server = PulseListenerServer { [weak self] event in
@@ -33,14 +33,6 @@ final class SessionStore {
         }
         self.server = server
         server.start()
-    }
-
-    /// Stop Bonjour and mark the store idle. Arrays are left as they are.
-    func stopListening() {
-        server?.stop()
-        server = nil
-        isListening = false
-        statusMessage = "Stopped"
     }
 
     /// Apply one `SessionEvent` from the listener: ready/fail, device join/leave, or insert/replace a request.
