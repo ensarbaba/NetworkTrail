@@ -1,7 +1,7 @@
 import SwiftUI
 import NetworkTrailWire
 
-/// `SessionScreen` is the three-column Mac window: devices, request table, detail pane. Reads `SessionStore`.
+/// `SessionScreen` is the three-column Mac window: apps, request table, detail pane. Reads `SessionStore`.
 ///
 /// Our SwiftUI, not Pulse’s console. No color-scheme override — follows the system.
 struct SessionScreen: View {
@@ -17,70 +17,100 @@ struct SessionScreen: View {
     }
 }
 
-/// Listener status plus the list of phones that have connected.
+/// "All Requests", then one row for each app. The selection sets `SessionStore.scope`.
 private struct SidebarView: View {
     @Environment(SessionStore.self) private var store
 
     var body: some View {
-        @Bindable var store = store
-        List(selection: $store.selectedClientID) {
-            Section("Status") {
-                Label(store.isListening ? "Listening" : "Idle", systemImage: store.isListening ? "antenna.radiowaves.left.and.right" : "antenna.radiowaves.left.and.right.slash")
-                Text(store.statusMessage)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                if let error = store.lastError {
-                    Text(error)
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                }
-            }
-            Section("Setup") {
-                Button("Copy iOS Simulator snippet") {
-                    Pasteboard.copy(SimulatorSnippet.source)
-                }
-            }
-            Section("Apps") {
-                if store.clients.isEmpty {
-                    Text("No app connected yet")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(store.clients) { client in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(client.appName).font(.headline)
-                            Text("\(client.deviceName) · iOS \(client.systemVersion)").font(.subheadline)
-                            Text(client.isConnected ? client.bundleIdentifier : "Disconnected")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        .foregroundStyle(client.isConnected ? .primary : .secondary)
-                        .tag(client.id as String?)
+        let clients = store.sortedClients
+        let requestCounts = store.requestCounts
+        let appNameCounts = Dictionary(clients.map { ($0.appName, 1) }, uniquingKeysWith: +)
+        List(selection: scopeSelection) {
+            Label("All Requests", systemImage: "list.bullet")
+                .badge(store.requests.count)
+                .help(requestCountText(store.requests.count))
+                .tag(RequestScope.all)
+            if !clients.isEmpty {
+                Section("Apps") {
+                    ForEach(clients) { client in
+                        let count = requestCounts[client.id, default: 0]
+                        AppRow(client: client, showsSimulator: appNameCounts[client.appName, default: 0] > 1)
+                            .badge(count)
+                            .help("\(client.isConnected ? "Connected" : "Disconnected") · \(requestCountText(count))")
+                            .tag(RequestScope.app(client.id))
+                            .contextMenu {
+                                Button("Remove App and Its Requests") {
+                                    store.removeApp(client.id)
+                                }
+                                .disabled(client.isConnected)
+                            }
                     }
                 }
             }
         }
         .listStyle(.sidebar)
         .frame(minWidth: 220)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            if let version = releaseVersionString() {
-                Text(version)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
+    }
+
+    /// `List` can set an empty selection (Command-click). The scope then stays as it is.
+    private var scopeSelection: Binding<RequestScope?> {
+        Binding(
+            get: { store.scope },
+            set: { newValue in
+                if let newValue {
+                    store.scope = newValue
+                }
             }
-        }
+        )
     }
 }
 
-/// Filter box and the live request table (`SessionStore.filteredRequests`), or an empty state.
+/// One app in the sidebar: a green dot while connected, a gray dot after it disconnects.
+/// The Simulator shows below the name only when another row has the same app name.
+private struct AppRow: View {
+    let client: CapturedClient
+    let showsSimulator: Bool
+
+    var body: some View {
+        Label {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(client.appName)
+                if showsSimulator {
+                    Text("\(client.deviceName) · iOS \(client.systemVersion)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        } icon: {
+            Image(systemName: "circle.fill")
+                .font(.system(size: 8))
+                .foregroundStyle(client.isConnected ? .green : .secondary)
+                .accessibilityLabel(client.isConnected ? "Connected" : "Disconnected")
+        }
+        .foregroundStyle(client.isConnected ? .primary : .secondary)
+    }
+}
+
+/// "1 request" or "N requests".
+private func requestCountText(_ count: Int) -> String {
+    count == 1 ? "1 request" : "\(count) requests"
+}
+
+/// Listener failure bar, filter box, and the live request table (`SessionStore.filteredRequests`), or an empty state.
 private struct RequestListView: View {
     @Environment(SessionStore.self) private var store
 
     var body: some View {
         @Bindable var store = store
         VStack(spacing: 0) {
+            if let listenerError = store.listenerError {
+                Label("NetworkTrail can't receive requests: \(listenerError)", systemImage: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                    .background(.red.opacity(0.12))
+            }
             HStack {
                 TextField("Filter URL, method, status", text: $store.filterText)
                     .textFieldStyle(.roundedBorder)
@@ -96,12 +126,14 @@ private struct RequestListView: View {
                     systemImage: "iphone",
                     description: Text("Paste the Simulator snippet into your iOS app and run a Debug build in the Simulator. Traffic appears here live.")
                 )
+                .frame(maxHeight: .infinity)
             } else if store.filteredRequests.isEmpty {
                 ContentUnavailableView(
                     "No requests yet",
                     systemImage: "network",
                     description: Text("Trigger HTTP calls from the connected app.")
                 )
+                .frame(maxHeight: .infinity)
             } else {
                 Table(store.filteredRequests, selection: $store.selectedRequestID) {
                     TableColumn("Status") { request in
@@ -169,13 +201,4 @@ private struct RequestListView: View {
             ? String(format: "%.0f ms", duration * 1000)
             : String(format: "%.1f s", duration)
     }
-}
-
-/// Marketing version from `CFBundleShortVersionString`. Nil when missing or empty (`swift run` has no release plist).
-func releaseVersionString(from bundle: Bundle = .main) -> String? {
-    guard let raw = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String else {
-        return nil
-    }
-    let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-    return trimmed.isEmpty ? nil : trimmed
 }

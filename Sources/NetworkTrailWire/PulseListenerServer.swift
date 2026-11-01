@@ -65,10 +65,19 @@ public final class PulseListenerServer {
         case .ready:
             onEvent?(.listenerReady)
         case .waiting(let error), .failed(let error):
-            onEvent?(.listenerFailed(error.localizedDescription))
+            onEvent?(.listenerFailed(Self.reason(for: error)))
         default:
             break
         }
+    }
+
+    /// Reason for the UI. A port in use is the usual failure; its `NWError.localizedDescription` is long:
+    /// "The operation couldn’t be completed. (Network.NWError error 48 - Address already in use)".
+    private static func reason(for error: NWError) -> String {
+        if case .posix(.EADDRINUSE) = error {
+            return "port \(LocalhostEndpoint.port) is in use by another app"
+        }
+        return error.localizedDescription
     }
 
     /// Wrap one accepted TCP connection as a `ClientConnection` and start reading packets.
