@@ -26,6 +26,8 @@ final class SessionStore {
     var filterText = ""
     /// Why the listener cannot accept connections. Nil while it works.
     var listenerError: String?
+    /// True while the Setup Snippet sheet shows. The sidebar button and the File menu set it.
+    var isShowingSetupSnippet = false
 
     private var server: PulseListenerServer?
 

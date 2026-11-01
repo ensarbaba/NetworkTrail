@@ -14,7 +14,11 @@ struct NetworkTrailMacApp: App {
                 .onAppear { store.startListening() }
         }
         .commands {
-            CommandGroup(replacing: .newItem) {}
+            CommandGroup(replacing: .newItem) {
+                Button("Show Setup Snippet…") {
+                    store.isShowingSetupSnippet = true
+                }
+            }
         }
     }
 }

@@ -5,7 +5,10 @@ import NetworkTrailWire
 ///
 /// Our SwiftUI, not Pulse’s console. No color-scheme override — follows the system.
 struct SessionScreen: View {
+    @Environment(SessionStore.self) private var store
+
     var body: some View {
+        @Bindable var store = store
         NavigationSplitView {
             SidebarView()
         } content: {
@@ -14,10 +17,14 @@ struct SessionScreen: View {
             RequestDetailView()
         }
         .navigationTitle("NetworkTrail")
+        .sheet(isPresented: $store.isShowingSetupSnippet) {
+            SetupSnippetView()
+        }
     }
 }
 
 /// "All Requests", then one row for each app. The selection sets `SessionStore.scope`.
+/// The Setup Snippet button stays at the bottom, below the list.
 private struct SidebarView: View {
     @Environment(SessionStore.self) private var store
 
@@ -50,6 +57,19 @@ private struct SidebarView: View {
         }
         .listStyle(.sidebar)
         .frame(minWidth: 220)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            Button {
+                store.isShowingSetupSnippet = true
+            } label: {
+                Label("Setup Snippet", systemImage: "chevron.left.forwardslash.chevron.right")
+            }
+            .buttonStyle(.borderless)
+            .foregroundStyle(.secondary)
+            .help("Show the snippet that adds NetworkTrail to an iOS app")
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+        }
     }
 
     /// `List` can set an empty selection (Command-click). The scope then stays as it is.
