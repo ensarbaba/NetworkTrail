@@ -16,10 +16,27 @@ struct SessionScreen: View {
         } detail: {
             RequestDetailView()
         }
-        .navigationTitle("NetworkTrail")
+        .navigationTitle(scopeTitle)
+        .navigationSubtitle(requestCountText(store.scopedRequests.count))
+        .searchable(text: $store.filterText)
+        .toolbar {
+            Button("Clear", systemImage: "trash") {
+                store.clearRequests()
+            }
+            .help(store.scope == .all ? "Clear all requests" : "Clear the requests of \(scopeTitle)")
+            .disabled(store.scopedRequests.isEmpty)
+        }
         .sheet(isPresented: $store.isShowingSetupSnippet) {
             SetupSnippetView()
         }
+    }
+
+    /// "All Requests", or the name of the app that the sidebar selects.
+    private var scopeTitle: String {
+        guard case .app(let id) = store.scope, let client = store.clients.first(where: { $0.id == id }) else {
+            return "All Requests"
+        }
+        return client.appName
     }
 }
 
@@ -116,7 +133,7 @@ private func requestCountText(_ count: Int) -> String {
     count == 1 ? "1 request" : "\(count) requests"
 }
 
-/// Listener failure bar, filter box, and the live request table (`SessionStore.filteredRequests`), or an empty state.
+/// Listener failure bar and the live request table (`SessionStore.filteredRequests`), or an empty state.
 private struct RequestListView: View {
     @Environment(SessionStore.self) private var store
 
@@ -131,14 +148,6 @@ private struct RequestListView: View {
                     .padding(.vertical, 8)
                     .background(.red.opacity(0.12))
             }
-            HStack {
-                TextField("Filter URL, method, status", text: $store.filterText)
-                    .textFieldStyle(.roundedBorder)
-                Text("\(store.filteredRequests.count) requests")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .padding()
 
             if store.clients.isEmpty {
                 ContentUnavailableView(
@@ -147,13 +156,16 @@ private struct RequestListView: View {
                     description: Text("Paste the Simulator snippet into your iOS app and run a Debug build in the Simulator. Traffic appears here live.")
                 )
                 .frame(maxHeight: .infinity)
-            } else if store.filteredRequests.isEmpty {
+            } else if store.scopedRequests.isEmpty {
                 ContentUnavailableView(
                     "No requests yet",
                     systemImage: "network",
                     description: Text("Trigger HTTP calls from the connected app.")
                 )
                 .frame(maxHeight: .infinity)
+            } else if store.filteredRequests.isEmpty {
+                ContentUnavailableView.search(text: store.filterText)
+                    .frame(maxHeight: .infinity)
             } else {
                 Table(store.filteredRequests, selection: $store.selectedRequestID) {
                     TableColumn("Status") { request in

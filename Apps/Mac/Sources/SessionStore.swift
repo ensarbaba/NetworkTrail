@@ -22,7 +22,7 @@ final class SessionStore {
     /// The sidebar selection.
     var scope: RequestScope = .all
     var selectedRequestID: UUID?
-    /// Filter box: matches URL, method, or status code (case-insensitive URL/method).
+    /// Search text from the toolbar: matches URL, method, or status code (case-insensitive URL/method).
     var filterText = ""
     /// Why the listener cannot accept connections. Nil while it works.
     var listenerError: String?
@@ -94,12 +94,28 @@ final class SessionStore {
         }
     }
 
-    /// Rows in `scope`, then narrowed by `filterText`.
-    var filteredRequests: [CapturedRequest] {
-        let scoped = requests.filter { request in
-            guard case .app(let id) = scope else { return true }
-            return request.clientID == id
+    /// Remove the requests in `scope`. The app rows stay.
+    func clearRequests() {
+        switch scope {
+        case .all:
+            requests.removeAll()
+        case .app(let id):
+            requests.removeAll { $0.clientID == id }
         }
+        if selectedRequest == nil {
+            selectedRequestID = nil
+        }
+    }
+
+    /// Rows in `scope`, before `filterText`.
+    var scopedRequests: [CapturedRequest] {
+        guard case .app(let id) = scope else { return requests }
+        return requests.filter { $0.clientID == id }
+    }
+
+    /// `scopedRequests` narrowed by `filterText`.
+    var filteredRequests: [CapturedRequest] {
+        let scoped = scopedRequests
         let trimmed = filterText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return scoped }
         return scoped.filter {

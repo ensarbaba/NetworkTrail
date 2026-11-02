@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// Mac app entry: one window, one `SessionStore`, `SessionScreen` as the root view.
@@ -19,6 +20,27 @@ struct NetworkTrailMacApp: App {
                     store.isShowingSetupSnippet = true
                 }
             }
+            CommandGroup(after: .pasteboard) {
+                Divider()
+                Button("Clear Requests") {
+                    store.clearRequests()
+                }
+                .keyboardShortcut("k")
+                .disabled(store.scopedRequests.isEmpty)
+            }
+            CommandGroup(after: .textEditing) {
+                Button("Find…") {
+                    Self.focusSearchField()
+                }
+                .keyboardShortcut("f")
+            }
         }
+    }
+
+    /// Put the cursor in the toolbar search field. macOS 14 has no SwiftUI call for this
+    /// (`searchFocused` needs macOS 15). SwiftUI shows `.searchable` as an `NSSearchToolbarItem`.
+    private static func focusSearchField() {
+        let searchItem = NSApp.keyWindow?.toolbar?.items.lazy.compactMap { $0 as? NSSearchToolbarItem }.first
+        searchItem?.beginSearchInteraction()
     }
 }
