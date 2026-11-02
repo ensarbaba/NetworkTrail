@@ -172,7 +172,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ensar.NetworkTrail;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.ensarbaba.NetworkTrail;
 				PRODUCT_MODULE_NAME = NetworkTrailMac;
 				PRODUCT_NAME = NetworkTrail;
 				SWIFT_VERSION = 5.0;
@@ -195,7 +195,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ensar.NetworkTrail;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.ensarbaba.NetworkTrail;
 				PRODUCT_MODULE_NAME = NetworkTrailMac;
 				PRODUCT_NAME = NetworkTrail;
 				SWIFT_VERSION = 5.0;

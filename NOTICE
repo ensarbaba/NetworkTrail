@@ -7,5 +7,6 @@ Copyright (c) 2020-2026 Alexander Grebenyuk (github.com/kean)
 MIT License
 
 Portions of the Pulse remote logging wire protocol are implemented in
-NetworkTrailWire for compatibility with Pulse's RemoteLogger client.
-See Sources/NetworkTrailWire for those files.
+NetworkTrailProtocol and NetworkTrailWire for compatibility with Pulse's
+RemoteLogger client. See Sources/NetworkTrailProtocol and
+Sources/NetworkTrailWire for those files.
