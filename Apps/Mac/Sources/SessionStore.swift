@@ -28,6 +28,9 @@ final class SessionStore {
     var listenerError: String?
     /// True while the Setup Snippet sheet shows. The sidebar button and the File menu set it.
     var isShowingSetupSnippet = false
+    /// True while the request inspector shows. The toolbar button and the View menu toggle it;
+    /// a double-click or Return on a table row opens it.
+    var isInspectorShown = false
 
     private var server: PulseListenerServer?
 

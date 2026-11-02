@@ -1,7 +1,8 @@
 import SwiftUI
 import NetworkTrailWire
 
-/// `SessionScreen` is the three-column Mac window: apps, request table, detail pane. Reads `SessionStore`.
+/// `SessionScreen` is the Mac window: apps in the sidebar, the request table, and the request inspector on the right.
+/// Reads `SessionStore`.
 ///
 /// Our SwiftUI, not Pulse’s console. No color-scheme override — follows the system.
 struct SessionScreen: View {
@@ -11,10 +12,12 @@ struct SessionScreen: View {
         @Bindable var store = store
         NavigationSplitView {
             SidebarView()
-        } content: {
-            RequestListView()
         } detail: {
-            RequestDetailView()
+            RequestListView()
+                .inspector(isPresented: $store.isInspectorShown) {
+                    RequestDetailView()
+                        .inspectorColumnWidth(min: 320, ideal: 420, max: 720)
+                }
         }
         .navigationTitle(scopeTitle)
         .navigationSubtitle(requestCountText(store.scopedRequests.count))
@@ -25,6 +28,10 @@ struct SessionScreen: View {
             }
             .help(store.scope == .all ? "Clear all requests" : "Clear the requests of \(scopeTitle)")
             .disabled(store.scopedRequests.isEmpty)
+            Button(store.isInspectorShown ? "Hide Inspector" : "Show Inspector", systemImage: "sidebar.trailing") {
+                store.isInspectorShown.toggle()
+            }
+            .help(store.isInspectorShown ? "Hide the request details" : "Show the request details")
         }
         .sheet(isPresented: $store.isShowingSetupSnippet) {
             SetupSnippetView()
@@ -200,6 +207,11 @@ private struct RequestListView: View {
                     if ids.count == 1, let request = store.requests.first(where: { ids.contains($0.id) }) {
                         Button("Copy URL") { Pasteboard.copy(request.url) }
                         Button("Copy as cURL") { Pasteboard.copy(CurlBuilder.make(from: request)) }
+                    }
+                } primaryAction: { ids in
+                    // Double-click or Return on a row.
+                    if !ids.isEmpty {
+                        store.isInspectorShown = true
                     }
                 }
             }

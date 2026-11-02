@@ -28,6 +28,12 @@ struct NetworkTrailMacApp: App {
                 .keyboardShortcut("k")
                 .disabled(store.scopedRequests.isEmpty)
             }
+            CommandGroup(after: .sidebar) {
+                Button(store.isInspectorShown ? "Hide Inspector" : "Show Inspector") {
+                    store.isInspectorShown.toggle()
+                }
+                .keyboardShortcut("0", modifiers: [.command, .option])
+            }
             CommandGroup(after: .textEditing) {
                 Button("Find…") {
                     Self.focusSearchField()
