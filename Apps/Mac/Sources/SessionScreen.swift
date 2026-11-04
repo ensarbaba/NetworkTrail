@@ -143,9 +143,15 @@ private func requestCountText(_ count: Int) -> String {
 /// Listener failure bar and the live request table (`SessionStore.filteredRequests`), or an empty state.
 private struct RequestListView: View {
     @Environment(SessionStore.self) private var store
+    /// Column choices: one set while the inspector is hidden, one while it shows. JSON in `UserDefaults`,
+    /// because `@SceneStorage` is lost when macOS closes the windows on quit.
+    @AppStorage("requestTable.columns.wide") private var wideColumns = Data()
+    @AppStorage("requestTable.columns.narrow") private var narrowColumns = Data()
 
     var body: some View {
         @Bindable var store = store
+        // While the inspector shows, Start, Host, and Size are hidden unless the user shows them.
+        let narrowSetVisibility: Visibility = store.isInspectorShown ? .hidden : .automatic
         VStack(spacing: 0) {
             if let listenerError = store.listenerError {
                 Label("NetworkTrail can't receive requests: \(listenerError)", systemImage: "exclamationmark.triangle.fill")
@@ -174,7 +180,18 @@ private struct RequestListView: View {
                 ContentUnavailableView.search(text: store.filterText)
                     .frame(maxHeight: .infinity)
             } else {
-                Table(store.filteredRequests, selection: $store.selectedRequestID) {
+                Table(
+                    store.filteredRequests,
+                    selection: $store.selectedRequestID,
+                    columnCustomization: columnCustomization
+                ) {
+                    TableColumn("Start") { request in
+                        Text(request.createdAt, format: .dateTime.hour().minute().second())
+                            .monospacedDigit()
+                    }
+                    .width(min: 60, ideal: 80, max: 110)
+                    .customizationID("start")
+                    .defaultVisibility(narrowSetVisibility)
                     TableColumn("Status") { request in
                         Text(statusLabel(for: request))
                             .fontWeight(.semibold)
@@ -182,26 +199,41 @@ private struct RequestListView: View {
                             .monospacedDigit()
                     }
                     .width(60)
+                    .customizationID("status")
+                    .disabledCustomizationBehavior(.visibility)
                     TableColumn("Method") { request in
                         Text(request.method)
                     }
                     .width(70)
+                    .customizationID("method")
                     TableColumn("Host") { request in
                         Text(request.host)
                             .lineLimit(1)
                     }
-                    .width(min: 100, ideal: 150)
+                    .width(min: 100, ideal: 150, max: 260)
+                    .customizationID("host")
+                    .defaultVisibility(narrowSetVisibility)
                     TableColumn("Path") { request in
                         Text(request.pathAndQuery)
                             .lineLimit(1)
                             .truncationMode(.middle)
                             .help(request.url)
                     }
-                    TableColumn("Time") { request in
+                    .customizationID("path")
+                    .disabledCustomizationBehavior(.visibility)
+                    TableColumn("Size") { request in
+                        Text(sizeLabel(for: request))
+                            .monospacedDigit()
+                    }
+                    .width(70)
+                    .customizationID("size")
+                    .defaultVisibility(narrowSetVisibility)
+                    TableColumn("Duration") { request in
                         Text(durationLabel(for: request))
                             .monospacedDigit()
                     }
                     .width(70)
+                    .customizationID("duration")
                 }
                 .contextMenu(forSelectionType: CapturedRequest.ID.self) { ids in
                     if ids.count == 1, let request = store.requests.first(where: { ids.contains($0.id) }) {
@@ -244,5 +276,20 @@ private struct RequestListView: View {
         return duration < 1
             ? String(format: "%.0f ms", duration * 1000)
             : String(format: "%.1f s", duration)
+    }
+
+    /// Response body size, for example `2 kB` or `380 bytes`, or an em dash while in flight or without a body.
+    private func sizeLabel(for request: CapturedRequest) -> String {
+        guard let body = request.responseBody else { return "—" }
+        return Int64(body.count).formatted(.byteCount(style: .file, spellsOutZero: false))
+    }
+
+    /// The column choices of the current inspector state, read from and written to `@AppStorage`.
+    private var columnCustomization: Binding<TableColumnCustomization<CapturedRequest>> {
+        let storage = store.isInspectorShown ? $narrowColumns : $wideColumns
+        return Binding(
+            get: { (try? JSONDecoder().decode(TableColumnCustomization<CapturedRequest>.self, from: storage.wrappedValue)) ?? TableColumnCustomization() },
+            set: { storage.wrappedValue = (try? JSONEncoder().encode($0)) ?? Data() }
+        )
     }
 }
