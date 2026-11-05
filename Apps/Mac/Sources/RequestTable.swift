@@ -3,6 +3,7 @@ import NetworkTrailWire
 
 /// The live request table (`SessionStore.filteredRequests`). A click selects a row; double-click or Return
 /// opens the inspector. The columns that show are saved, one set with the inspector and one without it.
+/// A "Relaunched" divider row separates the requests of two launches of an app (`RelaunchSection`).
 struct RequestTable: View {
     @Environment(SessionStore.self) private var store
     /// Column choices: one set while the inspector shows, one while it is hidden. JSON in `UserDefaults`,
@@ -14,8 +15,9 @@ struct RequestTable: View {
         @Bindable var store = store
         // While the inspector shows, Start, Host, and Size are hidden unless the user shows them.
         let secondaryColumnVisibility: Visibility = store.isInspectorShown ? .hidden : .automatic
+        let (newestRequests, relaunchSections) = RelaunchSection.split(store.filteredRequests)
         Table(
-            store.filteredRequests,
+            of: CapturedRequest.self,
             selection: $store.selectedRequestID,
             columnCustomization: columnCustomization
         ) {
@@ -68,6 +70,20 @@ struct RequestTable: View {
             }
             .width(70)
             .customizationID("duration")
+        } rows: {
+            ForEach(newestRequests) { request in
+                TableRow(request)
+            }
+            ForEach(relaunchSections) { section in
+                Section {
+                    ForEach(section.requests) { request in
+                        TableRow(request)
+                    }
+                } header: {
+                    Label(relaunchText(for: section), systemImage: "arrow.clockwise")
+                        .foregroundStyle(.secondary)
+                }
+            }
         }
         .contextMenu(forSelectionType: CapturedRequest.ID.self) { ids in
             if ids.count == 1, let request = store.requests.first(where: { ids.contains($0.id) }) {
@@ -80,6 +96,15 @@ struct RequestTable: View {
                 store.isInspectorShown = true
             }
         }
+    }
+
+    /// "Relaunched 08:10:05 · NetworkTrail Demo": the start of the new launch and the app name.
+    private func relaunchText(for section: RelaunchSection) -> String {
+        let time = section.launchedAt.formatted(.dateTime.hour().minute().second())
+        guard let appName = store.clients.first(where: { $0.id == section.clientID })?.appName else {
+            return "Relaunched \(time)"
+        }
+        return "Relaunched \(time) · \(appName)"
     }
 
     /// The column choices of the current inspector state, read from and written to `@AppStorage`.

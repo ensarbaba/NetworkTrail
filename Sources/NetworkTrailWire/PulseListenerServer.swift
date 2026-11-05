@@ -120,6 +120,7 @@ private final class ClientConnection {
     private let onEvent: (Event) -> Void
     private var buffer = Data()
     private var clientID: String?
+    private var clientLaunchedAt: Date?
     private var pingTask: Task<Void, Never>?
     private var isClosed = false
 
@@ -212,10 +213,11 @@ private final class ClientConnection {
             send(code: .ping)
         case .storeEventNetworkTaskCreated:
             if let event = try? JSONDecoder().decode(LoggerStore.Event.NetworkTaskCreated.self, from: packet.body),
-               let clientID {
+               let clientID, let clientLaunchedAt {
                 let request = CapturedRequest(
                     id: event.taskId,
                     clientID: clientID,
+                    clientLaunchedAt: clientLaunchedAt,
                     createdAt: event.createdAt,
                     method: event.originalRequest.httpMethod ?? "GET",
                     url: event.originalRequest.url?.absoluteString ?? "",
@@ -232,12 +234,13 @@ private final class ClientConnection {
             }
         case .storeEventNetworkTaskCompleted:
             if let event = try? PulseNetworkMessageCodec.decode(packet.body),
-               let clientID {
+               let clientID, let clientLaunchedAt {
                 let status = event.response?.statusCode
                 let duration = event.metrics?.taskInterval.duration
                 let request = CapturedRequest(
                     id: event.taskId,
                     clientID: clientID,
+                    clientLaunchedAt: clientLaunchedAt,
                     createdAt: event.createdAt,
                     method: event.originalRequest.httpMethod ?? "GET",
                     url: event.originalRequest.url?.absoluteString ?? "",
@@ -265,9 +268,11 @@ private final class ClientConnection {
             let deviceId: String
             let deviceInfo: LoggerStore.Info.DeviceInfo
             let appInfo: LoggerStore.Info.AppInfo
+            let launchedAt: Date
         }
         guard let hello = try? JSONDecoder().decode(ClientHello.self, from: body) else { return }
         clientID = hello.deviceId
+        clientLaunchedAt = hello.launchedAt
         let client = CapturedClient(
             id: hello.deviceId,
             deviceName: hello.deviceInfo.name,

@@ -2,7 +2,6 @@ import SwiftUI
 import NetworkTrailWire
 
 /// "All Requests", then one row for each app. The selection sets `SessionStore.scope`.
-/// The Setup Snippet button stays at the bottom, below the list.
 struct SidebarView: View {
     @Environment(SessionStore.self) private var store
 
@@ -35,19 +34,6 @@ struct SidebarView: View {
         }
         .listStyle(.sidebar)
         .frame(minWidth: 220)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            Button {
-                store.isShowingSetupSnippet = true
-            } label: {
-                Label("Setup Snippet", systemImage: "chevron.left.forwardslash.chevron.right")
-            }
-            .buttonStyle(.borderless)
-            .foregroundStyle(.secondary)
-            .help("Show the snippet that adds NetworkTrail to an iOS app")
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-        }
     }
 
     /// `List` can set an empty selection (Command-click). The scope then stays as it is.

@@ -38,6 +38,8 @@ public struct CapturedClient: Identifiable, Hashable, Sendable {
 public struct CapturedRequest: Identifiable, Hashable, Sendable {
     public let id: UUID
     public var clientID: String
+    /// The launch of the app that sent this request, from the hello of its connection.
+    public var clientLaunchedAt: Date
     public var createdAt: Date
     public var method: String
     public var url: String

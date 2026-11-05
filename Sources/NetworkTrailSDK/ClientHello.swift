@@ -23,6 +23,9 @@ struct ClientHello: Encodable {
     let deviceId: String
     let deviceInfo: DeviceInfo
     let appInfo: AppInfo
+    /// Not in the Pulse hello. The same in every hello of this process, so the Mac app can tell a relaunch
+    /// from a new connection of the same launch.
+    let launchedAt: Date
 
     var packet: Data? {
         guard let body = try? JSONEncoder().encode(self) else { return nil }
@@ -44,6 +47,10 @@ struct ClientHello: Encodable {
         "\(bundleID)|\(simulatorID)"
     }
 
+    /// Set when this process builds its first hello. The sender connects at launch while the Mac app runs,
+    /// so this is the launch time.
+    static let launchedAt = Date()
+
     /// Device facts come from the `SIMULATOR_*` environment variables that every Simulator process has.
     static func current() -> ClientHello {
         let environment = ProcessInfo.processInfo.environment
@@ -64,7 +71,8 @@ struct ClientHello: Encodable {
                 name: info?["CFBundleDisplayName"] as? String ?? info?["CFBundleName"] as? String,
                 version: info?["CFBundleShortVersionString"] as? String,
                 build: info?["CFBundleVersion"] as? String
-            )
+            ),
+            launchedAt: launchedAt
         )
     }
 }

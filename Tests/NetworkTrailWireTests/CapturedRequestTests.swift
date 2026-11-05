@@ -21,6 +21,7 @@ struct CapturedRequestTests {
         CapturedRequest(
             id: UUID(),
             clientID: "com.example.Demo|SIM-A",
+            clientLaunchedAt: Date(),
             createdAt: Date(),
             method: "GET",
             url: url,

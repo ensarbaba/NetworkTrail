@@ -33,7 +33,7 @@ To find the build folder, select **Product > Show Build Folder in Finder** in Xc
 
 ## Add NetworkTrail to your iOS app
 
-1. In NetworkTrail, click **Setup Snippet** at the bottom of the sidebar.
+1. In NetworkTrail, click **Setup Snippet** at the bottom of the window.
 2. Click **Copy Snippet**.
 3. Paste the snippet one time into the launch code of your app, for example `App.init`.
 4. Run a Debug build of your app in the iOS Simulator.

@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// The main area of the window: the listener failure bar, then the request table or an empty state.
+/// The main area of the window: the listener failure bar, the request table or an empty state,
+/// and a bottom bar with the Setup Snippet button. The bar stays visible when the sidebar is hidden.
 struct RequestPane: View {
     @Environment(SessionStore.self) private var store
 
@@ -35,6 +36,17 @@ struct RequestPane: View {
             } else {
                 RequestTable()
             }
+
+            Divider()
+            Button("Setup Snippet") {
+                store.isShowingSetupSnippet = true
+            }
+            .controlSize(.small)
+            .help("Show the snippet that adds NetworkTrail to an iOS app")
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(.bar)
         }
         .frame(minWidth: 420)
     }
