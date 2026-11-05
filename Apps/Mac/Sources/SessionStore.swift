@@ -26,7 +26,7 @@ final class SessionStore {
     var filterText = ""
     /// Why the listener cannot accept connections. Nil while it works.
     var listenerError: String?
-    /// True while the Setup Snippet sheet shows. The sidebar button and the File menu set it.
+    /// True while the Setup Snippet sheet shows. The button in the bottom bar and the File menu set it.
     var isShowingSetupSnippet = false
     /// True while the request inspector shows. The toolbar button and the View menu toggle it;
     /// a double-click or Return on a table row opens it.

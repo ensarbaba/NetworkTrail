@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Sheet with the snippet and the steps to add it to an iOS app.
-/// The Setup Snippet button in the sidebar and File > Show Setup Snippet… open it.
+/// The Setup Snippet button in the bottom bar and File > Show Setup Snippet… open it.
 struct SetupSnippetView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isCopied = false
