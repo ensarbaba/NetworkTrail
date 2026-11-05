@@ -13,7 +13,7 @@ struct RequestTable: View {
 
     var body: some View {
         @Bindable var store = store
-        // While the inspector shows, Start, Host, and Size are hidden unless the user shows them.
+        // While the inspector shows, Date, Start, Host, and Size are hidden unless the user shows them.
         let secondaryColumnVisibility: Visibility = store.isInspectorShown ? .hidden : .automatic
         let (newestRequests, relaunchSections) = RelaunchSection.split(store.filteredRequests)
         Table(
@@ -21,6 +21,14 @@ struct RequestTable: View {
             selection: $store.selectedRequestID,
             columnCustomization: columnCustomization
         ) {
+            TableColumn("Date") { request in
+                // Month and day in the Mac locale, for example "Nov 5". No year: requests stay only while the app runs.
+                Text(request.createdAt, format: .dateTime.month(.abbreviated).day())
+                    .monospacedDigit()
+            }
+            .width(min: 45, ideal: 60, max: 90)
+            .customizationID("date")
+            .defaultVisibility(secondaryColumnVisibility)
             TableColumn("Start") { request in
                 Text(request.createdAt, format: .dateTime.hour().minute().second())
                     .monospacedDigit()
