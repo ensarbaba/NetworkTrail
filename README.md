@@ -54,9 +54,9 @@ The repository contains a sample iOS app, DemoApp. DemoApp contains the snippet.
 
 1. Select the scheme **DemoApp** and an iOS Simulator.
 2. Run DemoApp.
-3. Tap **GET httpbin**, **POST httpbin**, or **Run all**.
+3. Tap **Run all**, or tap one call: GET, POST JSON, a 418, a duplicate, a slow call, a 404, a 500, a bad host, or an image.
 
-The requests show in NetworkTrail.
+The requests show in NetworkTrail. Each row in DemoApp shows the last result of its call.
 
 ## How it works
 
