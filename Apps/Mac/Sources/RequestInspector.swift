@@ -4,11 +4,12 @@ import NetworkTrailWire
 /// The inspector on the right: the selected request (`SessionStore.selectedRequest`), or "No request selected".
 ///
 /// A fixed header on top. Below it, the error banner (only for a call without a response)
-/// and the Response and Request tabs. Each tab shows its sections in this order: query parameters
+/// and the Request and Response tabs. Each tab shows its sections in this order: query parameters
 /// (Request only), headers, body.
 struct RequestInspector: View {
     @Environment(SessionStore.self) private var store
     /// The last tab that the user chose. It stays for the next request and after NetworkTrail starts again.
+    /// Response at the first start: it is the tab that a developer usually needs.
     @AppStorage("inspector.tab") private var tab = InspectorTab.response
 
     var body: some View {
@@ -22,17 +23,17 @@ struct RequestInspector: View {
                             ErrorBanner(error: error)
                         }
                         Picker("Tab", selection: $tab) {
-                            Text("Response").tag(InspectorTab.response)
                             Text("Request").tag(InspectorTab.request)
+                            Text("Response").tag(InspectorTab.response)
                         }
                         .pickerStyle(.segmented)
                         .labelsHidden()
                         .fixedSize()
                         switch tab {
-                        case .response:
-                            responseTab(for: request)
                         case .request:
                             requestTab(for: request)
+                        case .response:
+                            responseTab(for: request)
                         }
                     }
                     .padding()
@@ -88,8 +89,8 @@ struct RequestInspector: View {
 
 /// The inspector tabs. The raw value is saved in `UserDefaults`.
 private enum InspectorTab: String {
-    case response
     case request
+    case response
 }
 
 /// Status badge, method, duration, and response size; the full URL (selectable); the date and time and the app;
