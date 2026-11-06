@@ -73,7 +73,7 @@ struct RelaunchSectionTests {
             responseHeaders: [:],
             requestBody: nil,
             responseBody: nil,
-            errorDescription: nil,
+            error: nil,
             isComplete: false
         )
     }

@@ -227,7 +227,7 @@ private final class ClientConnection {
                     responseHeaders: [:],
                     requestBody: nil,
                     responseBody: nil,
-                    errorDescription: nil,
+                    error: nil,
                     isComplete: false
                 )
                 onEvent(.inspector(.requestUpdated(request)))
@@ -250,7 +250,9 @@ private final class ClientConnection {
                     responseHeaders: event.response?.headers ?? [:],
                     requestBody: event.requestBody,
                     responseBody: event.responseBody,
-                    errorDescription: event.error?.debugDescription,
+                    error: event.error.map {
+                        CapturedError(domain: $0.domain, code: $0.code, debugDescription: $0.debugDescription)
+                    },
                     isComplete: true
                 )
                 onEvent(.inspector(.requestUpdated(request)))

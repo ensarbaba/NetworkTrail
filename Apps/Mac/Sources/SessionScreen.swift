@@ -15,7 +15,7 @@ struct SessionScreen: View {
         } detail: {
             RequestPane()
                 .inspector(isPresented: $store.isInspectorShown) {
-                    RequestDetailView()
+                    RequestInspector()
                         .inspectorColumnWidth(min: 320, ideal: 420, max: 720)
                 }
         }
@@ -40,7 +40,7 @@ struct SessionScreen: View {
 
     /// "All Requests", or the name of the app that the sidebar selects.
     private var scopeTitle: String {
-        guard case .app(let id) = store.scope, let client = store.clients.first(where: { $0.id == id }) else {
+        guard case .app(let id) = store.scope, let client = store.client(id: id) else {
             return "All Requests"
         }
         return client.appName

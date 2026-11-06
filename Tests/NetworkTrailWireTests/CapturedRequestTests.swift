@@ -17,6 +17,21 @@ struct CapturedRequestTests {
         #expect(makeRequest(url: "not a url").pathAndQuery == "not a url")
     }
 
+    @Test func queryItemsAreDecodedAndKeepURLOrder() {
+        let items = makeRequest(url: "https://example.com/search?q=a%20b&tag=2&tag=1&flag").queryItems
+
+        #expect(items == [
+            URLQueryItem(name: "q", value: "a b"),
+            URLQueryItem(name: "tag", value: "2"),
+            URLQueryItem(name: "tag", value: "1"),
+            URLQueryItem(name: "flag", value: nil),
+        ])
+    }
+
+    @Test func queryItemsAreEmptyWithoutAQuery() {
+        #expect(makeRequest(url: "https://example.com/post").queryItems.isEmpty)
+    }
+
     private func makeRequest(url: String) -> CapturedRequest {
         CapturedRequest(
             id: UUID(),
@@ -31,7 +46,7 @@ struct CapturedRequestTests {
             responseHeaders: [:],
             requestBody: nil,
             responseBody: nil,
-            errorDescription: nil,
+            error: nil,
             isComplete: false
         )
     }

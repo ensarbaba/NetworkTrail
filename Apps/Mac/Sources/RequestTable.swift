@@ -109,7 +109,7 @@ struct RequestTable: View {
     /// "Relaunched 08:10:05 · NetworkTrail Demo": the start of the new launch and the app name.
     private func relaunchText(for section: RelaunchSection) -> String {
         let time = section.launchedAt.formatted(.dateTime.hour().minute().second())
-        guard let appName = store.clients.first(where: { $0.id == section.clientID })?.appName else {
+        guard let appName = store.client(id: section.clientID)?.appName else {
             return "Relaunched \(time)"
         }
         return "Relaunched \(time) · \(appName)"

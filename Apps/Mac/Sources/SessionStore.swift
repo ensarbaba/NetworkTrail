@@ -85,6 +85,11 @@ final class SessionStore {
         }
     }
 
+    /// The app with this ID, if it is in the session.
+    func client(id: CapturedClient.ID) -> CapturedClient? {
+        clients.first { $0.id == id }
+    }
+
     /// Apps in sidebar order: connected apps first, then disconnected apps. Each group keeps latest launch first.
     var sortedClients: [CapturedClient] {
         clients.filter(\.isConnected) + clients.filter { !$0.isConnected }
@@ -128,7 +133,7 @@ final class SessionStore {
         }
     }
 
-    /// The request the detail pane should show, if any.
+    /// The request that the inspector shows, if any.
     var selectedRequest: CapturedRequest? {
         guard let selectedRequestID else { return nil }
         return requests.first { $0.id == selectedRequestID }
