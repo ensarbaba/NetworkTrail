@@ -1,8 +1,9 @@
 import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 import NetworkTrailWire
 
-/// "Body · JSON · 412 bytes" with Pretty and Raw (JSON only) and Copy, then the body text.
+/// "Body · JSON · 412 bytes" with Pretty and Raw (JSON only) and Copy, then the body text or image.
 /// "No body" without a body; only the title for a binary body.
 ///
 /// The kind comes from the bytes (`BodyContent`), not from `Content-Type`. The parsing runs off the main thread.
@@ -12,6 +13,8 @@ struct BodySection: View {
     @AppStorage("inspector.bodyFormat") private var format = BodyFormat.pretty
     /// Nil while the body is parsed.
     @State private var content: BodyContent?
+    /// The decoded image for an image body, made once for each body.
+    @State private var image: NSImage?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -32,8 +35,8 @@ struct BodySection: View {
                     .labelsHidden()
                     .fixedSize()
                 }
-                if let shownText {
-                    Button("Copy") { Pasteboard.copy(shownText) }
+                if let copy {
+                    Button("Copy", action: copy)
                 }
             }
             .controlSize(.small)
@@ -45,37 +48,74 @@ struct BodySection: View {
                 BodyTextView(content: format == .pretty ? .json(json) : .plain(raw))
             case .text(let text):
                 BodyTextView(content: .plain(text))
+            case .image(let bodyImage):
+                if let image {
+                    // Smaller to fit the width, never larger than 1 point for each pixel.
+                    Image(nsImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: CGFloat(bodyImage.pixelWidth))
+                        .accessibilityLabel("Body image")
+                        .padding(8)
+                        .background(.quaternary, in: .rect(cornerRadius: 8))
+                }
             case .binary, nil:
                 EmptyView()
             }
         }
         .task(id: data) {
             content = nil
+            image = nil
             let data = data
             let parsed = await Task.detached(priority: .userInitiated) { BodyContent(data: data) }.value
             // A newer body may have started its own parsing.
             guard !Task.isCancelled else { return }
+            if case .image = parsed, let data {
+                image = NSImage(data: data)
+            }
             content = parsed
         }
     }
 
-    /// "JSON · 412 bytes", "Text · 23 bytes", or "Binary · 2 kB". Nil without a body and while parsing.
+    /// "JSON · 412 bytes", "Text · 23 bytes", "PNG · 100 × 100 px · 8 kB", or "Binary · 2 kB".
+    /// Nil without a body and while parsing.
     private var summary: String? {
         guard let data, let content else { return nil }
+        let size = byteCountText(data.count)
         switch content {
         case .empty: return nil
-        case .json: return "JSON · " + byteCountText(data.count)
-        case .text: return "Text · " + byteCountText(data.count)
-        case .binary: return "Binary · " + byteCountText(data.count)
+        case .json: return "JSON · " + size
+        case .text: return "Text · " + size
+        case .image(let image): return "\(image.format.rawValue) · \(image.pixelWidth) × \(image.pixelHeight) px · " + size
+        case .binary: return "Binary · " + size
         }
     }
 
-    /// The text that shows, for Copy. Nil without a body, for a binary body, and while parsing.
-    private var shownText: String? {
+    /// Copies what shows: the text, or the image. Nil without a body, for a binary body, and while parsing.
+    private var copy: (() -> Void)? {
         switch content {
-        case .json(let json, let raw): format == .pretty ? json.text : raw
-        case .text(let text): text
-        case .empty, .binary, nil: nil
+        case .json(let json, let raw):
+            let text = format == .pretty ? json.text : raw
+            return { Pasteboard.copy(text) }
+        case .text(let text):
+            return { Pasteboard.copy(text) }
+        case .image(let image):
+            guard let data else { return nil }
+            return { Pasteboard.copyImage(data, type: image.format.utType) }
+        case .empty, .binary, nil:
+            return nil
+        }
+    }
+}
+
+private extension BodyImage.Format {
+    var utType: UTType {
+        switch self {
+        case .png: .png
+        case .jpeg: .jpeg
+        case .gif: .gif
+        case .heic: .heic
+        case .webp: .webP
         }
     }
 }

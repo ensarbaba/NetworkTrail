@@ -10,13 +10,19 @@ public enum BodyContent: Equatable, Sendable {
     case json(PrettyJSON, raw: String)
     /// UTF-8 text that is not a JSON object or array.
     case text(String)
-    /// Bytes that are not UTF-8 text.
+    /// A PNG, JPEG, GIF, HEIC, or WebP image.
+    case image(BodyImage)
+    /// Bytes that are not UTF-8 text or an image.
     case binary(byteCount: Int)
 
     /// Parses JSON bodies. For a large body, call it off the main thread.
     public init(data: Data?) {
         guard let data, !data.isEmpty else {
             self = .empty
+            return
+        }
+        if let image = BodyImage(data: data) {
+            self = .image(image)
             return
         }
         guard let text = String(data: data, encoding: .utf8) else {
