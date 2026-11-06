@@ -4,6 +4,7 @@ import NetworkTrailWire
 /// The live request table (`SessionStore.filteredRequests`). A click selects a row; double-click or Return
 /// opens the inspector. The columns that show are saved, one set with the inspector and one without it.
 /// A "Relaunched" divider row separates the requests of two launches of an app (`RelaunchSection`).
+/// A duplicate has an icon in the first column; a slow call has an orange duration (`SessionStore.insights`).
 struct RequestTable: View {
     @Environment(SessionStore.self) private var store
     /// Column choices: one set while the inspector shows, one while it is hidden. JSON in `UserDefaults`,
@@ -16,11 +17,23 @@ struct RequestTable: View {
         // While the inspector shows, Date, Start, Host, and Size are hidden unless the user shows them.
         let secondaryColumnVisibility: Visibility = store.isInspectorShown ? .hidden : .automatic
         let (newestRequests, relaunchSections) = RelaunchSection.split(store.filteredRequests)
+        let insights = store.insights
         Table(
             of: CapturedRequest.self,
             selection: $store.selectedRequestID,
             columnCustomization: columnCustomization
         ) {
+            // The title is the icon: the column is too narrow for a word.
+            TableColumn("\(Image(systemName: "repeat"))") { request in
+                if let earlierStart = insights.duplicates[request.id] {
+                    Image(systemName: "repeat")
+                        .foregroundStyle(.secondary)
+                        .help(repeatsCallText(at: earlierStart))
+                        .accessibilityLabel(repeatsCallText(at: earlierStart))
+                }
+            }
+            .width(24)
+            .customizationID("duplicate")
             TableColumn("Date") { request in
                 // Month and day in the Mac locale, for example "Nov 5". No year: requests stay only while the app runs.
                 Text(request.createdAt, format: .dateTime.month(.abbreviated).day())
@@ -75,6 +88,10 @@ struct RequestTable: View {
             TableColumn("Duration") { request in
                 Text(request.durationText)
                     .monospacedDigit()
+                    // `HierarchicalShapeStyle.primary`, not `Color.primary`: the same default style as the other cells.
+                    .foregroundStyle(
+                        insights.slow.contains(request.id) ? AnyShapeStyle(Color.orange) : AnyShapeStyle(HierarchicalShapeStyle.primary)
+                    )
             }
             .width(70)
             .customizationID("duration")

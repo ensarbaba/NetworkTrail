@@ -42,6 +42,11 @@ func byteCountText(_ count: Int) -> String {
     Int64(count).formatted(.byteCount(style: .file, spellsOutZero: false))
 }
 
+/// "Repeats the call at 20:39:32": the tooltip of a duplicate. `start` is the start of the earlier call.
+func repeatsCallText(at start: Date) -> String {
+    "Repeats the call at \(start.formatted(.dateTime.hour().minute().second()))"
+}
+
 /// "1 request" or "N requests".
 func requestCountText(_ count: Int) -> String {
     count == 1 ? "1 request" : "\(count) requests"

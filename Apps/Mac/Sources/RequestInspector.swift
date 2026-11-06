@@ -14,8 +14,14 @@ struct RequestInspector: View {
 
     var body: some View {
         if let request = store.selectedRequest {
+            let insights = store.insights
             VStack(alignment: .leading, spacing: 0) {
-                InspectorHeader(request: request, appName: store.client(id: request.clientID)?.appName)
+                InspectorHeader(
+                    request: request,
+                    appName: store.client(id: request.clientID)?.appName,
+                    slowRule: insights.slow.contains(request.id) ? HealthFilter.slow.rule(limits: store.healthLimits) : nil,
+                    repeatsCallAt: insights.duplicates[request.id]
+                )
                 Divider()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
@@ -93,28 +99,34 @@ private enum InspectorTab: String {
     case response
 }
 
-/// Status badge, method, duration, and response size; the full URL (selectable); the date and time and the app;
-/// Copy URL and Copy as cURL. It does not scroll.
+/// Status badge, method, duration, and response size, then a Slow and a Duplicate badge when they apply;
+/// the full URL (selectable); the date and time and the app; Copy URL and Copy as cURL. It does not scroll.
 private struct InspectorHeader: View {
     let request: CapturedRequest
     let appName: String?
+    /// The Slow rule for the tooltip of the Slow badge. Nil when the call is not slow.
+    let slowRule: String?
+    /// The start of the earlier call that this call repeats. Nil when it is not a duplicate.
+    let repeatsCallAt: Date?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
-                Text(request.statusText)
-                    .fontWeight(.semibold)
-                    .monospacedDigit()
-                    .foregroundStyle(request.statusColor)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 1)
-                    .background(request.statusColor.opacity(0.15), in: .rect(cornerRadius: 4))
+                Badge(title: request.statusText, color: request.statusColor)
                 Text(request.method)
                     .fontWeight(.semibold)
                 if !measurements.isEmpty {
                     Text("· " + measurements.joined(separator: " · "))
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
+                }
+                if let slowRule {
+                    Badge(title: "Slow", color: .orange)
+                        .help(slowRule)
+                }
+                if let repeatsCallAt {
+                    Badge(title: "Duplicate", systemImage: "repeat", color: .secondary)
+                        .help(repeatsCallText(at: repeatsCallAt))
                 }
             }
             Text(request.url)
@@ -145,6 +157,29 @@ private struct InspectorHeader: View {
         let start = request.createdAt.formatted(.dateTime.month(.abbreviated).day().hour().minute().second())
         guard let appName else { return start }
         return "\(start) · \(appName)"
+    }
+}
+
+/// Semibold text in a color on a light background of the same color: the status, Slow, and Duplicate.
+private struct Badge: View {
+    let title: String
+    var systemImage: String?
+    let color: Color
+
+    var body: some View {
+        Group {
+            if let systemImage {
+                Label(title, systemImage: systemImage)
+            } else {
+                Text(title)
+            }
+        }
+        .fontWeight(.semibold)
+        .monospacedDigit()
+        .foregroundStyle(color)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 1)
+        .background(color.opacity(0.15), in: .rect(cornerRadius: 4))
     }
 }
 
