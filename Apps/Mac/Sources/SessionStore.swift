@@ -8,7 +8,17 @@ enum RequestScope: Hashable {
     case app(CapturedClient.ID)
 }
 
-/// `SessionStore` holds live Mac UI state: connected apps, HTTP rows, selection, and the filter box.
+/// The health filter above the request table (`SessionInsights`).
+enum HealthFilter: CaseIterable, Identifiable {
+    case all
+    case failed
+    case slow
+    case duplicates
+
+    var id: Self { self }
+}
+
+/// `SessionStore` holds live Mac UI state: connected apps, HTTP rows, selection, the search text, and the health filter.
 ///
 /// Owns a `PulseListenerServer` and applies each `SessionEvent`. Nothing is saved to disk.
 /// SwiftUI views update when a property that they read changes.
@@ -24,6 +34,8 @@ final class SessionStore {
     var selectedRequestID: UUID?
     /// Search text from the toolbar: matches URL, method, or status code (case-insensitive URL/method).
     var filterText = ""
+    /// The active health filter. Not saved: each start shows all requests.
+    var healthFilter = HealthFilter.all
     /// Why the listener cannot accept connections. Nil while it works.
     var listenerError: String?
     /// True while the Setup Snippet sheet shows. The button in the bottom bar and the File menu set it.
@@ -121,12 +133,28 @@ final class SessionStore {
         return requests.filter { $0.clientID == id }
     }
 
-    /// `scopedRequests` narrowed by `filterText`.
+    /// Failed, slow, and duplicate requests in `scope`, before `filterText`.
+    var insights: SessionInsights {
+        SessionInsights(requests: scopedRequests, limits: .defaults)
+    }
+
+    /// `scopedRequests` narrowed by `healthFilter` and `filterText`.
     var filteredRequests: [CapturedRequest] {
-        let scoped = scopedRequests
+        var requests = scopedRequests
+        if healthFilter != .all {
+            let insights = self.insights
+            requests = requests.filter { request in
+                switch healthFilter {
+                case .all: true
+                case .failed: insights.failed.contains(request.id)
+                case .slow: insights.slow.contains(request.id)
+                case .duplicates: insights.duplicates[request.id] != nil
+                }
+            }
+        }
         let trimmed = filterText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return scoped }
-        return scoped.filter {
+        guard !trimmed.isEmpty else { return requests }
+        return requests.filter {
             $0.url.localizedCaseInsensitiveContains(trimmed)
                 || $0.method.localizedCaseInsensitiveContains(trimmed)
                 || ($0.statusCode.map(String.init) ?? "").contains(trimmed)

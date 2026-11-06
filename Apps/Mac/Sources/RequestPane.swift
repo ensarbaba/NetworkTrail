@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// The main area of the window: the listener failure bar, the request table or an empty state,
-/// and a bottom bar with the Setup Snippet button. The bar stays visible when the sidebar is hidden.
+/// The main area of the window: the listener failure bar, the health filter bar (when the scope has requests),
+/// the request table or an empty state, and a bottom bar with the Setup Snippet button.
+/// The bottom bar stays visible when the sidebar is hidden.
 struct RequestPane: View {
     @Environment(SessionStore.self) private var store
 
@@ -30,11 +31,17 @@ struct RequestPane: View {
                     description: Text("Trigger HTTP calls from the connected app.")
                 )
                 .frame(maxHeight: .infinity)
-            } else if store.filteredRequests.isEmpty {
-                ContentUnavailableView.search(text: store.filterText)
-                    .frame(maxHeight: .infinity)
             } else {
-                RequestTable()
+                HealthFilterBar()
+                if !store.filteredRequests.isEmpty {
+                    RequestTable()
+                } else if store.filterText.isEmpty {
+                    ContentUnavailableView(store.healthFilter.emptyTitle, systemImage: "checkmark.circle")
+                        .frame(maxHeight: .infinity)
+                } else {
+                    ContentUnavailableView.search(text: store.filterText)
+                        .frame(maxHeight: .infinity)
+                }
             }
 
             Divider()
