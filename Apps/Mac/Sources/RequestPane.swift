@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The main area of the window: the listener failure bar, the yellow Paused bar with Resume,
-/// the health filter bar (when the scope has requests),
+/// the health filter bar (when the scope has requests), the first-run screen (until an app connects),
 /// the request table or an empty state, and a bottom bar with the Setup Snippet button.
 /// The bottom bar stays visible when the sidebar is hidden.
 struct RequestPane: View {
@@ -38,12 +38,7 @@ struct RequestPane: View {
             }
 
             if store.clients.isEmpty {
-                ContentUnavailableView(
-                    "Waiting for an app",
-                    systemImage: "iphone",
-                    description: Text("Paste the Simulator snippet into your iOS app and run a Debug build in the Simulator. Traffic appears here live.")
-                )
-                .frame(maxHeight: .infinity)
+                FirstRunView()
             } else if store.scopedRequests.isEmpty {
                 ContentUnavailableView(
                     "No requests yet",
