@@ -218,32 +218,3 @@ private struct NameValueList: View {
         }
     }
 }
-
-/// "Body" with a Copy button, then the body as pretty JSON or text (`JSONFormatter`), or "No body".
-private struct BodySection: View {
-    let data: Data?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            if let data, !data.isEmpty {
-                let text = JSONFormatter.prettyString(from: data)
-                HStack {
-                    Text("Body")
-                        .font(.headline)
-                    Spacer()
-                    Button("Copy") { Pasteboard.copy(text) }
-                        .controlSize(.small)
-                }
-                Text(text)
-                    .font(.callout.monospaced())
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            } else {
-                Text("Body")
-                    .font(.headline)
-                Text("No body")
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-}

@@ -33,8 +33,13 @@ extension CapturedRequest {
     /// Response body size, for example `2 kB` or `380 bytes`, or an em dash while in flight or without a body.
     var sizeText: String {
         guard let responseBody else { return "—" }
-        return Int64(responseBody.count).formatted(.byteCount(style: .file, spellsOutZero: false))
+        return byteCountText(responseBody.count)
     }
+}
+
+/// A byte count, for example `2 kB` or `380 bytes`.
+func byteCountText(_ count: Int) -> String {
+    Int64(count).formatted(.byteCount(style: .file, spellsOutZero: false))
 }
 
 /// "1 request" or "N requests".
