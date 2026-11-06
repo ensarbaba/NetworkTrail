@@ -146,6 +146,12 @@ final class SessionStore {
         clients.filter(\.isConnected) + clients.filter { !$0.isConnected }
     }
 
+    /// Show every request of the selected app: clear the search text and the health filter. The app stays selected.
+    func clearFilters() {
+        filterText = ""
+        healthFilter = .all
+    }
+
     /// Number of requests of each app.
     var requestCounts: [CapturedClient.ID: Int] {
         requests.reduce(into: [:]) { counts, request in

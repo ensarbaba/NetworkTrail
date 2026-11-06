@@ -2,7 +2,8 @@ import SwiftUI
 
 /// The main area of the window: the listener failure bar, the yellow Paused bar with Resume,
 /// the health filter bar (when the scope has requests), the first-run screen (until an app connects),
-/// the request table or an empty state, and a bottom bar with the Setup Snippet button.
+/// the request table or an empty state ("No requests yet", or "No results" with Show All Requests),
+/// and a bottom bar with the Setup Snippet button.
 /// The bottom bar stays visible when the sidebar is hidden.
 struct RequestPane: View {
     @Environment(SessionStore.self) private var store
@@ -40,22 +41,26 @@ struct RequestPane: View {
             if store.clients.isEmpty {
                 FirstRunView()
             } else if store.scopedRequests.isEmpty {
-                ContentUnavailableView(
-                    "No requests yet",
-                    systemImage: "network",
-                    description: Text("Trigger HTTP calls from the connected app.")
-                )
-                .frame(maxHeight: .infinity)
+                ContentUnavailableView("No requests yet", systemImage: "network", description: Text(noRequestsText))
+                    .frame(maxHeight: .infinity)
             } else {
                 HealthFilterBar()
                 if !store.filteredRequests.isEmpty {
                     RequestTable()
-                } else if store.filterText.isEmpty {
-                    ContentUnavailableView(store.healthFilter.emptyTitle, systemImage: "checkmark.circle")
-                        .frame(maxHeight: .infinity)
                 } else {
-                    ContentUnavailableView.search(text: store.filterText)
-                        .frame(maxHeight: .infinity)
+                    ContentUnavailableView {
+                        Label(
+                            noResultsTitle,
+                            systemImage: searchText.isEmpty ? "line.3.horizontal.decrease.circle" : "magnifyingglass"
+                        )
+                    } description: {
+                        Text(noResultsText)
+                    } actions: {
+                        Button("Show All Requests") {
+                            store.clearFilters()
+                        }
+                    }
+                    .frame(maxHeight: .infinity)
                 }
             }
 
@@ -71,5 +76,46 @@ struct RequestPane: View {
             .background(.bar)
         }
         .frame(minWidth: 420)
+    }
+
+    /// What to do to get requests: names the selected app, or the connected app when there is only one.
+    private var noRequestsText: String {
+        if case .app(let id) = store.scope, let client = store.client(id: id) {
+            return client.isConnected
+                ? "Trigger HTTP calls in \(client.appName)."
+                : "\(client.appName) is not connected. Run it in the Simulator."
+        }
+        let connectedClients = store.clients.filter(\.isConnected)
+        switch connectedClients.count {
+        case 0: return "No app is connected. Run an app with the snippet in the Simulator."
+        case 1: return "Trigger HTTP calls in \(connectedClients[0].appName)."
+        default: return "Trigger HTTP calls in a connected app."
+        }
+    }
+
+    /// The search text without spaces at the ends, as `SessionStore.filteredRequests` uses it.
+    private var searchText: String {
+        store.filterText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// "No results for “dup”" for a search, else the title of the health filter, for example "No failed requests".
+    private var noResultsTitle: String {
+        searchText.isEmpty ? store.healthFilter.emptyTitle : "No results for “\(searchText)”"
+    }
+
+    /// What hides the rows, and the app: "No request of NetworkTrail Demo matches the search and the Failed filter."
+    private var noResultsText: String {
+        var filters: [String] = []
+        if !searchText.isEmpty {
+            filters.append("the search")
+        }
+        if store.healthFilter != .all {
+            filters.append("the \(store.healthFilter.title) filter")
+        }
+        let filterText = filters.joined(separator: " and ")
+        if case .app(let id) = store.scope, let client = store.client(id: id) {
+            return "No request of \(client.appName) matches \(filterText)."
+        }
+        return "No request matches \(filterText)."
     }
 }
