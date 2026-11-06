@@ -20,7 +20,7 @@ enum HealthFilter: CaseIterable, Identifiable {
 
 /// `SessionStore` holds live Mac UI state: connected apps, HTTP rows, selection, the search text, and the health filter.
 ///
-/// Owns a `PulseListenerServer` and applies each `SessionEvent`. Nothing is saved to disk.
+/// Owns a `PulseListenerServer` and applies each `SessionEvent`. Only `healthLimits` is saved (in `UserDefaults`).
 /// SwiftUI views update when a property that they read changes.
 @Observable
 @MainActor
@@ -36,6 +36,10 @@ final class SessionStore {
     var filterText = ""
     /// The active health filter. Not saved: each start shows all requests.
     var healthFilter = HealthFilter.all
+    /// The limits of the Slow and Duplicate rules. Saved on each change.
+    var healthLimits = HealthLimits.saved {
+        didSet { healthLimits.save() }
+    }
     /// Why the listener cannot accept connections. Nil while it works.
     var listenerError: String?
     /// True while the Setup Snippet sheet shows. The button in the bottom bar and the File menu set it.
@@ -135,7 +139,7 @@ final class SessionStore {
 
     /// Failed, slow, and duplicate requests in `scope`, before `filterText`.
     var insights: SessionInsights {
-        SessionInsights(requests: scopedRequests, limits: .defaults)
+        SessionInsights(requests: scopedRequests, limits: healthLimits)
     }
 
     /// `scopedRequests` narrowed by `healthFilter` and `filterText`.
