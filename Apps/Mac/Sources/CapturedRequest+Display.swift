@@ -47,6 +47,15 @@ func repeatsCallText(at start: Date) -> String {
     "Repeats the call at \(start.formatted(.dateTime.hour().minute().second()))"
 }
 
+/// "Paused", or "Paused · 3 new requests waiting": the subtitle and the bar while the table is paused.
+func pausedText(waiting count: Int) -> String {
+    switch count {
+    case 0: "Paused"
+    case 1: "Paused · 1 new request waiting"
+    default: "Paused · \(count) new requests waiting"
+    }
+}
+
 /// "1 request" or "N requests".
 func requestCountText(_ count: Int) -> String {
     count == 1 ? "1 request" : "\(count) requests"

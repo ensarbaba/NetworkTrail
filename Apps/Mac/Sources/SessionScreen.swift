@@ -20,14 +20,20 @@ struct SessionScreen: View {
                 }
         }
         .navigationTitle(scopeTitle)
-        .navigationSubtitle(requestCountText(store.scopedRequests.count))
+        .navigationSubtitle(
+            store.isPaused ? pausedText(waiting: store.waitingRequestCount) : requestCountText(store.scopedRequests.count)
+        )
         .searchable(text: $store.filterText)
         .toolbar {
+            Button(store.isPaused ? "Resume" : "Pause", systemImage: store.isPaused ? "play.fill" : "pause.fill") {
+                store.togglePause()
+            }
+            .help(store.isPaused ? "Resume live updates (⌘P)" : "Pause live updates (⌘P)")
             Button("Clear", systemImage: "trash") {
                 store.clearRequests()
             }
             .help(store.scope == .all ? "Clear all requests" : "Clear the requests of \(scopeTitle)")
-            .disabled(store.scopedRequests.isEmpty)
+            .disabled(!store.canClear)
             Button(store.isInspectorShown ? "Hide Inspector" : "Show Inspector", systemImage: "sidebar.trailing") {
                 store.isInspectorShown.toggle()
             }

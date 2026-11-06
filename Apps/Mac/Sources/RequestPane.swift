@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// The main area of the window: the listener failure bar, the health filter bar (when the scope has requests),
+/// The main area of the window: the listener failure bar, the yellow Paused bar with Resume,
+/// the health filter bar (when the scope has requests),
 /// the request table or an empty state, and a bottom bar with the Setup Snippet button.
 /// The bottom bar stays visible when the sidebar is hidden.
 struct RequestPane: View {
@@ -15,6 +16,25 @@ struct RequestPane: View {
                     .padding(.horizontal)
                     .padding(.vertical, 8)
                     .background(.red.opacity(0.12))
+            }
+
+            if store.isPaused {
+                HStack {
+                    Label {
+                        Text(pausedText(waiting: store.waitingRequestCount))
+                    } icon: {
+                        Image(systemName: "pause.circle.fill")
+                            .foregroundStyle(.orange)
+                    }
+                    Spacer()
+                    Button("Resume") {
+                        store.togglePause()
+                    }
+                    .controlSize(.small)
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 6)
+                .background(.yellow.opacity(0.18))
             }
 
             if store.clients.isEmpty {

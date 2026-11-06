@@ -36,6 +36,12 @@ final class SessionStore {
     var filterText = ""
     /// The active health filter. Not saved: each start shows all requests.
     var healthFilter = HealthFilter.all
+    /// True while the table is paused: request updates wait in `pausedUpdates` until Resume.
+    /// Not saved: each start is live.
+    private(set) var isPaused = false
+    /// Request updates that arrived while paused, in arrival order. A newer update of a request
+    /// replaces the older one in its place.
+    private var pausedUpdates: [CapturedRequest] = []
     /// The limits of the Slow and Duplicate rules. Saved on each change.
     var healthLimits = HealthLimits.saved {
         didSet { healthLimits.save() }
@@ -77,15 +83,43 @@ final class SessionStore {
                 clients[index].isConnected = false
             }
         case .requestUpdated(let request):
-            if let index = requests.firstIndex(where: { $0.id == request.id }) {
-                requests[index] = request
+            if isPaused {
+                if let index = pausedUpdates.firstIndex(where: { $0.id == request.id }) {
+                    pausedUpdates[index] = request
+                } else {
+                    pausedUpdates.append(request)
+                }
             } else {
-                requests.insert(request, at: 0)
-            }
-            if selectedRequestID == nil {
-                selectedRequestID = request.id
+                apply(request)
             }
         }
+    }
+
+    /// Insert a new row on top, or replace the row with the same ID.
+    private func apply(_ request: CapturedRequest) {
+        if let index = requests.firstIndex(where: { $0.id == request.id }) {
+            requests[index] = request
+        } else {
+            requests.insert(request, at: 0)
+        }
+        if selectedRequestID == nil {
+            selectedRequestID = request.id
+        }
+    }
+
+    /// Pause: the table, its counts, and running rows stop changing. Resume: the waiting updates apply in order.
+    func togglePause() {
+        if isPaused {
+            pausedUpdates.forEach(apply)
+            pausedUpdates.removeAll()
+        }
+        isPaused.toggle()
+    }
+
+    /// Number of new requests in `scope` that wait for Resume. Updates of rows in the table do not count.
+    var waitingRequestCount: Int {
+        let shownIDs = Set(requests.map(\.id))
+        return pausedUpdates.filter { !shownIDs.contains($0.id) && isInScope($0) }.count
     }
 
     /// Remove a disconnected app and its requests. If the sidebar showed that app, it shows all requests.
@@ -96,6 +130,7 @@ final class SessionStore {
         }
         clients.removeAll { $0.id == id }
         requests.removeAll { $0.clientID == id }
+        pausedUpdates.removeAll { $0.clientID == id }
         if scope == .app(id) {
             scope = .all
         }
@@ -118,23 +153,28 @@ final class SessionStore {
         }
     }
 
-    /// Remove the requests in `scope`. The app rows stay.
+    /// Remove the requests in `scope`, and the updates of `scope` that wait for Resume. The app rows stay.
     func clearRequests() {
-        switch scope {
-        case .all:
-            requests.removeAll()
-        case .app(let id):
-            requests.removeAll { $0.clientID == id }
-        }
+        requests.removeAll(where: isInScope)
+        pausedUpdates.removeAll(where: isInScope)
         if selectedRequest == nil {
             selectedRequestID = nil
         }
     }
 
+    /// True when Clear has something to remove: rows in `scope`, or new requests that wait for Resume.
+    var canClear: Bool {
+        !scopedRequests.isEmpty || waitingRequestCount > 0
+    }
+
     /// Rows in `scope`, before `filterText`.
     var scopedRequests: [CapturedRequest] {
-        guard case .app(let id) = scope else { return requests }
-        return requests.filter { $0.clientID == id }
+        requests.filter(isInScope)
+    }
+
+    private func isInScope(_ request: CapturedRequest) -> Bool {
+        guard case .app(let id) = scope else { return true }
+        return request.clientID == id
     }
 
     /// Failed, slow, and duplicate requests in `scope`, before `filterText`.

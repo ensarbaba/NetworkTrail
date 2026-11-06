@@ -26,9 +26,13 @@ struct NetworkTrailMacApp: App {
                     store.clearRequests()
                 }
                 .keyboardShortcut("k")
-                .disabled(store.scopedRequests.isEmpty)
+                .disabled(!store.canClear)
             }
             CommandGroup(after: .sidebar) {
+                Button(store.isPaused ? "Resume Live Updates" : "Pause Live Updates") {
+                    store.togglePause()
+                }
+                .keyboardShortcut("p")
                 Button(store.isInspectorShown ? "Hide Inspector" : "Show Inspector") {
                     store.isInspectorShown.toggle()
                 }
