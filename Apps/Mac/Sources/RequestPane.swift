@@ -123,7 +123,13 @@ struct RequestPane: View {
         if store.healthFilter != .all {
             filters.append("the \(store.healthFilter.title) filter")
         }
-        let filterText = filters.joined(separator: " and ")
+        if store.visibleRequests.count < store.scopedRequests.count {
+            filters.append("the host filter")
+        }
+        // English list, as the rest of the UI: "a and b", or "a, b, and c".
+        let filterText = filters.count < 3
+            ? filters.joined(separator: " and ")
+            : filters.dropLast().joined(separator: ", ") + ", and " + filters[filters.count - 1]
         if case .app(let id) = store.scope, let client = store.client(id: id) {
             return "No request of \(client.appName) matches \(filterText)."
         }

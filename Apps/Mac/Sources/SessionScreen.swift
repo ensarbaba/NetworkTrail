@@ -21,7 +21,7 @@ struct SessionScreen: View {
         }
         .navigationTitle(scopeTitle)
         .navigationSubtitle(
-            store.isPaused ? pausedText(waiting: store.waitingRequestCount) : requestCountText(store.scopedRequests.count)
+            store.isPaused ? pausedText(waiting: store.waitingRequestCount) : requestCountText(store.visibleRequests.count)
         )
         .searchable(text: $store.filterText)
         .toolbar {
@@ -34,6 +34,7 @@ struct SessionScreen: View {
             }
             .help(store.scope == .all ? "Clear all requests" : "Clear the requests of \(scopeTitle)")
             .disabled(!store.canClear)
+            HostFilterButton()
             Button(store.isInspectorShown ? "Hide Inspector" : "Show Inspector", systemImage: "sidebar.trailing") {
                 store.isInspectorShown.toggle()
             }

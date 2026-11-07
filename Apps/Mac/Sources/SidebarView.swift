@@ -7,12 +7,14 @@ struct SidebarView: View {
 
     var body: some View {
         let clients = store.sortedClients
+        // Without the requests to hidden hosts, the same as the table.
         let requestCounts = store.requestCounts
+        let totalCount = requestCounts.values.reduce(0, +)
         let appNameCounts = Dictionary(clients.map { ($0.appName, 1) }, uniquingKeysWith: +)
         List(selection: scopeSelection) {
             Label("All Requests", systemImage: "list.bullet")
-                .badge(store.requests.count)
-                .help(requestCountText(store.requests.count))
+                .badge(totalCount)
+                .help(requestCountText(totalCount))
                 .tag(RequestScope.all)
             if !clients.isEmpty {
                 Section("Apps") {

@@ -2,7 +2,8 @@ import SwiftUI
 import NetworkTrailWire
 
 /// All, Failed, Slow, and Duplicates above the request table, each with its count in the selected app
-/// (`SessionStore.insights`, not narrowed by the search text). One filter is active; click it again to show all.
+/// (`SessionStore.insights`: without hidden hosts, not narrowed by the search text). One filter is active;
+/// click it again to show all.
 /// A scope bar, like the search bar of the Finder. The (i) button at the end opens the rules and the limits.
 struct HealthFilterBar: View {
     @Environment(SessionStore.self) private var store
@@ -48,7 +49,7 @@ struct HealthFilterBar: View {
 
     private func count(of filter: HealthFilter, in insights: SessionInsights) -> Int {
         switch filter {
-        case .all: store.scopedRequests.count
+        case .all: store.visibleRequests.count
         case .failed: insights.failed.count
         case .slow: insights.slow.count
         case .duplicates: insights.duplicates.count

@@ -52,6 +52,12 @@ final class SessionStore {
     var healthLimits = HealthLimits.saved {
         didSet { healthLimits.save() }
     }
+    /// The hosts that the user unchecked in the Hosts popover (`CapturedRequest.hostKey`), one set for all apps.
+    /// Their requests are still captured, but no view shows or counts them. Saved on each change.
+    /// A new host is not in the set, so it shows: nothing is hidden until the user hides it.
+    var hiddenHosts = HiddenHostsStorage.load() {
+        didSet { HiddenHostsStorage.save(hiddenHosts) }
+    }
     /// Why the listener cannot accept connections, and when. Nil while it works.
     var listenerFailure: ListenerFailure?
     /// True while the Setup Snippet sheet shows. The button in the bottom bar and the File menu set it.
@@ -113,7 +119,7 @@ final class SessionStore {
         } else {
             requests.insert(request, at: 0)
         }
-        if selectedRequestID == nil {
+        if selectedRequestID == nil, isShown(request) {
             selectedRequestID = request.id
         }
     }
@@ -127,10 +133,11 @@ final class SessionStore {
         isPaused.toggle()
     }
 
-    /// Number of new requests in `scope` that wait for Resume. Updates of rows in the table do not count.
+    /// Number of new requests in `scope` that wait for Resume. Updates of rows in the table
+    /// and requests to hidden hosts do not count.
     var waitingRequestCount: Int {
         let shownIDs = Set(requests.map(\.id))
-        return pausedUpdates.filter { !shownIDs.contains($0.id) && isInScope($0) }.count
+        return pausedUpdates.filter { !shownIDs.contains($0.id) && isInScope($0) && isShown($0) }.count
     }
 
     /// Remove a disconnected app and its requests. If the sidebar showed that app, it shows all requests.
@@ -157,15 +164,17 @@ final class SessionStore {
         clients.filter(\.isConnected) + clients.filter { !$0.isConnected }
     }
 
-    /// Show every request of the selected app: clear the search text and the health filter. The app stays selected.
+    /// Show every request of the selected app: clear the search text and the health filter, and show all hosts.
+    /// The app stays selected.
     func clearFilters() {
         filterText = ""
         healthFilter = .all
+        hiddenHosts = []
     }
 
-    /// Number of requests of each app.
+    /// Number of requests of each app, without the requests to hidden hosts.
     var requestCounts: [CapturedClient.ID: Int] {
-        requests.reduce(into: [:]) { counts, request in
+        requests.filter(isShown).reduce(into: [:]) { counts, request in
             counts[request.clientID, default: 0] += 1
         }
     }
@@ -184,9 +193,14 @@ final class SessionStore {
         !scopedRequests.isEmpty || waitingRequestCount > 0
     }
 
-    /// Rows in `scope`, before `filterText`.
+    /// Rows in `scope`, also the requests to hidden hosts. Clear removes all of them.
     var scopedRequests: [CapturedRequest] {
         requests.filter(isInScope)
+    }
+
+    /// Rows in `scope` without the requests to hidden hosts, before the health filter and `filterText`.
+    var visibleRequests: [CapturedRequest] {
+        scopedRequests.filter(isShown)
     }
 
     private func isInScope(_ request: CapturedRequest) -> Bool {
@@ -194,14 +208,19 @@ final class SessionStore {
         return request.clientID == id
     }
 
-    /// Failed, slow, and duplicate requests in `scope`, before `filterText`.
-    var insights: SessionInsights {
-        SessionInsights(requests: scopedRequests, limits: healthLimits)
+    /// False when the user hid the host of `request`. Without hidden hosts, the URL is not parsed.
+    private func isShown(_ request: CapturedRequest) -> Bool {
+        hiddenHosts.isEmpty || !hiddenHosts.contains(request.hostKey)
     }
 
-    /// `scopedRequests` narrowed by `healthFilter` and `filterText`.
+    /// Failed, slow, and duplicate requests in `visibleRequests`, before `filterText`.
+    var insights: SessionInsights {
+        SessionInsights(requests: visibleRequests, limits: healthLimits)
+    }
+
+    /// `visibleRequests` narrowed by `healthFilter` and `filterText`.
     var filteredRequests: [CapturedRequest] {
-        var requests = scopedRequests
+        var requests = visibleRequests
         if healthFilter != .all {
             let insights = self.insights
             requests = requests.filter { request in
@@ -227,9 +246,23 @@ final class SessionStore {
         RequestResponseTextBuilder.make(from: request, client: client(id: request.clientID))
     }
 
-    /// The request that the inspector shows, if any.
+    /// The request that the inspector shows, if any. Nil while its host is hidden.
     var selectedRequest: CapturedRequest? {
         guard let selectedRequestID else { return nil }
-        return requests.first { $0.id == selectedRequestID }
+        return requests.first { $0.id == selectedRequestID && isShown($0) }
+    }
+}
+
+/// The hidden hosts in `UserDefaults`, so that they stay hidden after NetworkTrail starts again.
+/// Not `@AppStorage`: `SessionStore` filters the requests with them, so the store holds them.
+enum HiddenHostsStorage {
+    private static let key = "hostFilter.hiddenHosts"
+
+    static func load() -> Set<String> {
+        Set(UserDefaults.standard.stringArray(forKey: key) ?? [])
+    }
+
+    static func save(_ hosts: Set<String>) {
+        UserDefaults.standard.set(hosts.sorted(), forKey: key)
     }
 }
