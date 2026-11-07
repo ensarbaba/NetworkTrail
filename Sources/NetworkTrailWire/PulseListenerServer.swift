@@ -24,7 +24,7 @@ public final class PulseListenerServer {
     }
 
     /// Start accepting connections on `LocalhostEndpoint`. Safe to call twice: the second call is ignored
-    /// while a listener already exists.
+    /// while a listener already exists, also a failed one. `restart()` replaces a failed listener.
     public func start() {
         guard listener == nil else { return }
         do {
@@ -44,6 +44,19 @@ public final class PulseListenerServer {
         } catch {
             onEvent?(.listenerFailed(error.localizedDescription))
         }
+    }
+
+    /// Discard the listener and start a new one. Use it after a failure: a failed `NWListener` stays failed
+    /// when the port becomes free again.
+    public func restart() {
+        if let listener {
+            // Without handlers, the `.cancelled` state of the old listener does not reach the UI.
+            listener.stateUpdateHandler = nil
+            listener.newConnectionHandler = nil
+            listener.cancel()
+            self.listener = nil
+        }
+        start()
     }
 
     /// Plain TCP bound to `127.0.0.1`, with keepalive so a dead peer is noticed even when no data flows.

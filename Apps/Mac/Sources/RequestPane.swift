@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The main area of the window: the listener failure bar, the yellow Paused bar with Resume,
+/// The main area of the window: the red listener failure bar with Retry, the yellow Paused bar with Resume,
 /// the health filter bar (when the scope has requests), the first-run screen (until an app connects),
 /// the request table or an empty state ("No requests yet", or "No results" with Show All Requests),
 /// and a bottom bar with the Setup Snippet button.
@@ -10,13 +10,24 @@ struct RequestPane: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if let listenerError = store.listenerError {
-                Label("NetworkTrail can't receive requests: \(listenerError)", systemImage: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.red)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
-                    .background(.red.opacity(0.12))
+            if let failure = store.listenerFailure {
+                HStack {
+                    Label("NetworkTrail can't receive requests: \(failure.reason)", systemImage: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.red)
+                    Spacer()
+                    // A Retry that fails again changes only this time: the new listener fails in less than 1 ms.
+                    Text("Checked at \(failure.date.formatted(.dateTime.hour().minute().second()))")
+                        .foregroundStyle(.secondary)
+                        .fixedSize()
+                    Button("Retry") {
+                        store.retryListening()
+                    }
+                    .controlSize(.small)
+                    .help("Try again to receive requests")
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 6)
+                .background(.red.opacity(0.12))
             }
 
             if store.isPaused {

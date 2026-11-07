@@ -18,6 +18,12 @@ enum HealthFilter: CaseIterable, Identifiable {
     var id: Self { self }
 }
 
+/// Why the listener cannot accept connections, and when the failure came. Each failed Retry gives a new date.
+struct ListenerFailure {
+    let reason: String
+    let date: Date
+}
+
 /// `SessionStore` holds live Mac UI state: connected apps, HTTP rows, selection, the search text, and the health filter.
 ///
 /// Owns a `PulseListenerServer` and applies each `SessionEvent`. Only `healthLimits` is saved (in `UserDefaults`).
@@ -46,8 +52,8 @@ final class SessionStore {
     var healthLimits = HealthLimits.saved {
         didSet { healthLimits.save() }
     }
-    /// Why the listener cannot accept connections. Nil while it works.
-    var listenerError: String?
+    /// Why the listener cannot accept connections, and when. Nil while it works.
+    var listenerFailure: ListenerFailure?
     /// True while the Setup Snippet sheet shows. The button in the bottom bar and the File menu set it.
     var isShowingSetupSnippet = false
     /// True while the request inspector shows. The toolbar button and the View menu toggle it;
@@ -68,13 +74,18 @@ final class SessionStore {
         server.start()
     }
 
+    /// Replace the failed listener with a new one, for example after the app that held the port quit.
+    func retryListening() {
+        server?.restart()
+    }
+
     /// Apply one `SessionEvent` from the listener: ready/fail, device join/leave, or insert/replace a request.
     private func handle(_ event: SessionEvent) {
         switch event {
         case .listenerReady:
-            listenerError = nil
+            listenerFailure = nil
         case .listenerFailed(let message):
-            listenerError = message
+            listenerFailure = ListenerFailure(reason: message, date: .now)
         case .clientConnected(let client):
             clients.removeAll { $0.id == client.id }
             clients.insert(client, at: 0)
