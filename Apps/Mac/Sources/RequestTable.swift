@@ -114,6 +114,7 @@ struct RequestTable: View {
             if ids.count == 1, let request = store.requests.first(where: { ids.contains($0.id) }) {
                 Button("Copy URL") { Pasteboard.copy(request.url) }
                 Button("Copy as cURL") { Pasteboard.copy(CurlBuilder.make(from: request)) }
+                Button("Copy Request and Response") { Pasteboard.copy(store.requestAndResponseText(of: request)) }
             }
         } primaryAction: { ids in
             // Double-click or Return on a row.

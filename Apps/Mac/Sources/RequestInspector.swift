@@ -100,8 +100,10 @@ private enum InspectorTab: String {
 }
 
 /// Status badge, method, duration, and response size, then a Slow and a Duplicate badge when they apply;
-/// the full URL (selectable); the date and time and the app; Copy URL and Copy as cURL. It does not scroll.
+/// the full URL (selectable); the date and time and the app; Copy URL, Copy as cURL, and Copy Request and Response
+/// (on a second row when the inspector is narrow). It does not scroll.
 private struct InspectorHeader: View {
+    @Environment(SessionStore.self) private var store
     let request: CapturedRequest
     let appName: String?
     /// The Slow rule for the tooltip of the Slow badge. Nil when the call is not slow.
@@ -134,14 +136,34 @@ private struct InspectorHeader: View {
                 .textSelection(.enabled)
             Text(startText)
                 .foregroundStyle(.secondary)
-            HStack {
-                Button("Copy URL") { Pasteboard.copy(request.url) }
-                Button("Copy as cURL") { Pasteboard.copy(CurlBuilder.make(from: request)) }
+            // One row when the three buttons fit. In a narrow inspector, Copy Request and Response
+            // goes to a second row, so that no label is cut.
+            ViewThatFits(in: .horizontal) {
+                HStack {
+                    copyURLAndCurlButtons
+                    copyRequestAndResponseButton
+                }
+                VStack(alignment: .leading) {
+                    HStack {
+                        copyURLAndCurlButtons
+                    }
+                    copyRequestAndResponseButton
+                }
             }
             .controlSize(.small)
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var copyURLAndCurlButtons: some View {
+        Button("Copy URL") { Pasteboard.copy(request.url) }
+        Button("Copy as cURL") { Pasteboard.copy(CurlBuilder.make(from: request)) }
+    }
+
+    private var copyRequestAndResponseButton: some View {
+        Button("Copy Request and Response") { Pasteboard.copy(store.requestAndResponseText(of: request)) }
     }
 
     /// Duration and response size, only the ones that are known.

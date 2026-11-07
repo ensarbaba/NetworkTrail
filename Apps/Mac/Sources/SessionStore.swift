@@ -222,6 +222,11 @@ final class SessionStore {
         }
     }
 
+    /// The text of Copy Request and Response: `request` and its response as HTTP message text, with its app.
+    func requestAndResponseText(of request: CapturedRequest) -> String {
+        RequestResponseTextBuilder.make(from: request, client: client(id: request.clientID))
+    }
+
     /// The request that the inspector shows, if any.
     var selectedRequest: CapturedRequest? {
         guard let selectedRequestID else { return nil }
