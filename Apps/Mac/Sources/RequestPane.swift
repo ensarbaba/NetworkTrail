@@ -86,8 +86,11 @@ struct RequestPane: View {
             .padding(.vertical, 6)
             .background(.bar)
         }
-        .frame(minWidth: 420)
+        .frame(minWidth: Self.minWidth)
     }
+
+    /// The narrowest width of the pane. The inspector handle stops before the pane becomes narrower.
+    static let minWidth: CGFloat = 420
 
     /// What to do to get requests: names the selected app, or the connected app when there is only one.
     private var noRequestsText: String {

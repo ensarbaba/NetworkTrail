@@ -13,10 +13,10 @@ struct SessionScreen: View {
         NavigationSplitView {
             SidebarView()
         } detail: {
+            // Not `.inspector`: on macOS 27 it loops the layout in the detail column (see `resizableInspector`).
             RequestPane()
-                .inspector(isPresented: $store.isInspectorShown) {
+                .resizableInspector(isPresented: store.isInspectorShown, minContentWidth: RequestPane.minWidth) {
                     RequestInspector()
-                        .inspectorColumnWidth(min: 320, ideal: 420, max: 720)
                 }
         }
         .navigationTitle(scopeTitle)
