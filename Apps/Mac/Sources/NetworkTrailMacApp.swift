@@ -2,14 +2,16 @@ import AppKit
 import SwiftUI
 
 /// Mac app entry: one window, one `SessionStore`, `SessionScreen` as the root view.
+/// Also the Settings window and the optional menu bar item.
 ///
 /// Starts the listener when the window appears. Follows the system appearance.
 @main
 struct NetworkTrailMacApp: App {
     @State private var store = SessionStore()
+    @AppStorage(MenuBarItemSetting.key) private var showsMenuBarItem = false
 
     var body: some Scene {
-        WindowGroup {
+        WindowGroup(id: MainWindow.id) {
             SessionScreen()
                 .environment(store)
                 .onAppear { store.startListening() }
@@ -45,6 +47,34 @@ struct NetworkTrailMacApp: App {
                 .keyboardShortcut("f")
             }
         }
+
+        Settings {
+            SettingsView()
+        }
+
+        MenuBarExtra(isInserted: menuBarItemInserted) {
+            MenuBarMenu()
+                .environment(store)
+        } label: {
+            // Without this label, VoiceOver reads the asset name.
+            Image("MenuBarIcon")
+                .accessibilityLabel("NetworkTrail")
+        }
+    }
+
+    /// The setting, for `MenuBarExtra`. A removal from the menu bar (Command-drag) sets it to false.
+    ///
+    /// Writes only a changed value: `MenuBarExtra` writes the same value back on each scene update, and
+    /// each `@AppStorage` write updates the App scene again. With `$showsMenuBarItem` the app loops at 100 % CPU.
+    private var menuBarItemInserted: Binding<Bool> {
+        Binding(
+            get: { showsMenuBarItem },
+            set: { newValue in
+                if newValue != showsMenuBarItem {
+                    showsMenuBarItem = newValue
+                }
+            }
+        )
     }
 
     /// Put the cursor in the toolbar search field. macOS 14 has no SwiftUI call for this

@@ -36,3 +36,16 @@ To make PNG previews without the GUI, use the `ictool` in Icon Composer:
 ```
 
 Renditions: `Default`, `Dark`, `TintedLight`, `TintedDark`, `ClearLight`, `ClearDark`.
+
+## Menu bar icon
+
+The optional menu bar item uses `Apps/Mac/Sources/Assets.xcassets/MenuBarIcon.imageset/MenuBarIcon.svg`. It shows two rows of the app icon, `200` and `404`, in black. The codes are cut out of the rows: each row is one path with `fill-rule="evenodd"`. The asset is a template image, so macOS sets its color in the menu bar. The icon is the same in every app state.
+
+| Value | Size |
+|---|---|
+| Canvas | 27.12 × 22 pt (22 pt is the maximum height of a menu bar item) |
+| Row | 10.2 pt high, 1.6 pt gap, round ends |
+| Second row | starts 5.01 pt to the right (112/228 of the row height, the step of the app icon) |
+| Codes | the digit outlines from `codes.svg`, cap height 5.71 pt (0.56 of the row), 4.28 pt from the left end of the row |
+
+When you change `codes.svg`, change the digits in `MenuBarIcon.svg` too.
