@@ -4,7 +4,7 @@ import NetworkTrailWire
 /// All, Failed, Slow, and Duplicates above the request table, each with its count in the selected app
 /// (`SessionStore.insights`: without hidden hosts, not narrowed by the search text). One filter is active;
 /// click it again to show all.
-/// A scope bar, like the search bar of the Finder. The (i) button at the end opens the rules and the limits.
+/// A scope bar, like the search bar of the Finder. The "Rules…" button at the end opens the rules and the limits.
 struct HealthFilterBar: View {
     @Environment(SessionStore.self) private var store
     @State private var isShowingRules = false
@@ -20,13 +20,14 @@ struct HealthFilterBar: View {
                     .help(filter.rule(limits: store.healthLimits))
                 }
                 Spacer()
-                Button {
+                // A text button, not an icon: an (i) icon looked like help text and hid the limits.
+                // The same small push button as "Setup Snippet" under the table.
+                Button("Rules…") {
                     isShowingRules.toggle()
-                } label: {
-                    Image(systemName: "info.circle")
                 }
-                .help("Health rules and limits")
-                .accessibilityLabel("Health rules")
+                .buttonStyle(.automatic)
+                .controlSize(.small)
+                .help("Show the health rules and change the Slow and Duplicates limits")
                 .popover(isPresented: $isShowingRules, arrowEdge: .bottom) {
                     HealthRulesView()
                 }
@@ -57,47 +58,94 @@ struct HealthFilterBar: View {
     }
 }
 
-/// The rules of Failed, Slow, and Duplicates, with the Slow limit and the Duplicate window to edit.
+/// The rules of Failed, Slow, and Duplicates, one row each: the name with its count, then the rule as a sentence.
+/// The Slow and Duplicates sentences hold their limit, so the value is in the text that it changes.
+/// The counts are the counts of the chips, so they change while the user edits a limit.
 private struct HealthRulesView: View {
     @Environment(SessionStore.self) private var store
+    /// The limit field that has the cursor. Nil when the popover opens, so that a typed key changes no limit.
+    @FocusState private var focusedLimit: LimitKind?
 
     var body: some View {
         @Bindable var store = store
-        VStack(alignment: .leading, spacing: 12) {
+        let insights = store.insights
+        VStack(alignment: .leading, spacing: 10) {
             Text("Health rules")
                 .font(.headline)
-            rule(.failed)
-            VStack(alignment: .leading, spacing: 6) {
-                rule(.slow)
-                LimitField(title: "Limit", seconds: $store.healthLimits.slowDuration)
+            row(.failed, count: insights.failed.count) {
+                Text("Status 400–599, or no response")
+            } note: {
+                Text("Fixed. Calls that the app cancelled do not count.")
             }
-            VStack(alignment: .leading, spacing: 6) {
-                rule(.duplicates)
-                LimitField(title: "Window", seconds: $store.healthLimits.duplicateWindow)
+            Divider()
+            row(.slow, count: insights.slow.count) {
+                HStack(spacing: 4) {
+                    Text("Took longer than")
+                    LimitField(accessibilityTitle: "Slow limit in seconds", seconds: $store.healthLimits.slowDuration)
+                        .focused($focusedLimit, equals: .slow)
+                }
+            } note: {
+                Text("Only finished calls. Default \(secondsText(HealthLimits.defaults.slowDuration)).")
             }
-            Button("Reset to Defaults") {
+            Divider()
+            row(.duplicates, count: insights.duplicates.count) {
+                HStack(spacing: 4) {
+                    Text("Same call again within")
+                    LimitField(accessibilityTitle: "Duplicates window in seconds", seconds: $store.healthLimits.duplicateWindow)
+                        .focused($focusedLimit, equals: .duplicates)
+                }
+            } note: {
+                Text(
+                    "Same app, method, URL, and body. The first call does not count. "
+                        + "Default \(secondsText(HealthLimits.defaults.duplicateWindow))."
+                )
+            }
+            Button("Restore Defaults") {
                 store.healthLimits = .defaults
             }
             .disabled(store.healthLimits == .defaults)
+            .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding()
-        .frame(width: 300)
+        .frame(width: 400)
+        .onAppear {
+            // The popover puts the cursor in its first field. Take it out after that happens.
+            DispatchQueue.main.async {
+                focusedLimit = nil
+            }
+        }
     }
 
-    private func rule(_ filter: HealthFilter) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(filter.title)
-                .fontWeight(.semibold)
-            Text(filter.rule(limits: nil))
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+    private enum LimitKind {
+        case slow
+        case duplicates
+    }
+
+    /// One rule: "Slow 1" in a fixed-width column on the left, the rule and a secondary note on the right.
+    private func row(
+        _ filter: HealthFilter,
+        count: Int,
+        @ViewBuilder rule: () -> some View,
+        @ViewBuilder note: () -> some View
+    ) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            (Text(filter.title).fontWeight(.semibold) + Text(" \(count)").foregroundStyle(.secondary))
+                .frame(width: 100, alignment: .leading)
+            VStack(alignment: .leading, spacing: 3) {
+                rule()
+                note()
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 }
 
-/// A limit in seconds: a number field and a stepper in steps of 0.5 s, from 0.1 s to 60 s.
+/// A limit in seconds: a number field, a stepper in steps of 0.5 s, and "s". From 0.1 s to 60 s.
 private struct LimitField: View {
-    let title: String
+    /// The name for VoiceOver. The field shows no label: the sentence around it names it.
+    let accessibilityTitle: String
     @Binding var seconds: TimeInterval
 
     private static let range: ClosedRange<TimeInterval> = 0.1...60
@@ -109,16 +157,21 @@ private struct LimitField: View {
             set: { seconds = min(max($0, Self.range.lowerBound), Self.range.upperBound) }
         )
         HStack(spacing: 4) {
-            Text(title)
-            TextField(title, value: clamped, format: .number.precision(.fractionLength(0...2)))
+            TextField(accessibilityTitle, value: clamped, format: .number.precision(.fractionLength(0...2)))
                 .labelsHidden()
+                .accessibilityLabel(accessibilityTitle)
                 .multilineTextAlignment(.trailing)
                 .frame(width: 50)
-            Stepper(title, value: clamped, in: Self.range, step: 0.5)
+            Stepper(accessibilityTitle, value: clamped, in: Self.range, step: 0.5)
                 .labelsHidden()
             Text("s")
         }
     }
+}
+
+/// "1 s" or "0.5 s".
+private func secondsText(_ interval: TimeInterval) -> String {
+    interval.formatted(.number.precision(.fractionLength(0...2))) + " s"
 }
 
 extension HealthFilter {
@@ -131,19 +184,18 @@ extension HealthFilter {
         }
     }
 
-    /// The rule of the filter. With `limits`, it names the values (for the tooltips);
-    /// without, it names "the limit" and "the window" (for the popover, which shows the values in fields).
-    func rule(limits: HealthLimits?) -> String {
+    /// The rule of the filter with the current values, for the tooltips of the chips and the inspector badges.
+    func rule(limits: HealthLimits) -> String {
         switch self {
         case .all:
             return "All requests of the selection."
         case .failed:
             return "Status 400–599, or an error without a response. Calls that the app cancelled do not count."
         case .slow:
-            return "Finished calls that took longer than \(limits.map { seconds($0.slowDuration) } ?? "the limit")."
+            return "Finished calls that took longer than \(secondsText(limits.slowDuration))."
         case .duplicates:
             return "Calls with the same method, URL, and body as an earlier call of the same app within "
-                + "\(limits.map { seconds($0.duplicateWindow) } ?? "the window"). The first call does not count."
+                + "\(secondsText(limits.duplicateWindow)). The first call does not count."
         }
     }
 
@@ -155,10 +207,5 @@ extension HealthFilter {
         case .slow: "No slow requests"
         case .duplicates: "No duplicate requests"
         }
-    }
-
-    /// "1 s" or "0.5 s".
-    private func seconds(_ interval: TimeInterval) -> String {
-        interval.formatted(.number.precision(.fractionLength(0...2))) + " s"
     }
 }
