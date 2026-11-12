@@ -14,7 +14,8 @@ struct RequestTable: View {
 
     var body: some View {
         @Bindable var store = store
-        // While the inspector shows, Date, Start, Host, and Size are hidden unless the user shows them.
+        // While the inspector shows, Start, Host, and Size are hidden unless the user shows them.
+        // The duplicate and Date columns are always hidden until the user shows them.
         let secondaryColumnVisibility: Visibility = store.isInspectorShown ? .hidden : .automatic
         let (newestRequests, relaunchSections) = RelaunchSection.split(store.filteredRequests)
         let insights = store.insights
@@ -23,8 +24,10 @@ struct RequestTable: View {
             selection: $store.selectedRequestID,
             columnCustomization: columnCustomization
         ) {
-            // The title is the icon: the column is too narrow for a word.
-            TableColumn("\(Image(systemName: "repeat"))") { request in
+            // A word and the icon: the header's show/hide menu uses the same title and drops the icon,
+            // so an icon-only title gives a blank menu item. The word comes first, because the menu keeps
+            // the space next to the dropped icon, and a leading space moves the item out of line.
+            TableColumn("Duplicate \(Image(systemName: "repeat"))") { request in
                 if let earlierStart = insights.duplicates[request.id] {
                     Image(systemName: "repeat")
                         .foregroundStyle(.secondary)
@@ -32,8 +35,9 @@ struct RequestTable: View {
                         .accessibilityLabel(repeatsCallText(at: earlierStart))
                 }
             }
-            .width(24)
+            .width(90)
             .customizationID("duplicate")
+            .defaultVisibility(.hidden)
             TableColumn("Date") { request in
                 // Month and day in the Mac locale, for example "Nov 5". No year: requests stay only while the app runs.
                 Text(request.createdAt, format: .dateTime.month(.abbreviated).day())
@@ -41,7 +45,7 @@ struct RequestTable: View {
             }
             .width(min: 45, ideal: 60, max: 90)
             .customizationID("date")
-            .defaultVisibility(secondaryColumnVisibility)
+            .defaultVisibility(.hidden)
             TableColumn("Start") { request in
                 Text(request.createdAt, format: .dateTime.hour().minute().second())
                     .monospacedDigit()
