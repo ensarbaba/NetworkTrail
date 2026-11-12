@@ -72,6 +72,17 @@ An app in the iOS Simulator runs on your Mac. For that app, the address `127.0.0
 - Only one copy of NetworkTrail can receive traffic at a time. The other copies show an error.
 - If your app also contains Pulse, your app can stop with an error.
 
+## Report a bug or a crash
+
+NetworkTrail does not send crash reports or other data to a server. To report a problem, open a [bug report](https://github.com/ensarbaba/NetworkTrail/issues/new?template=bug_report.yml) on GitHub.
+
+For a crash, add the crash report. macOS keeps each crash report in the Console app, in **Crash Reports**, and in `~/Library/Logs/DiagnosticReports`:
+
+- The Mac app: `NetworkTrail-<date>.ips`
+- Your iOS app in the Simulator: `<app name>-<date>.ips`
+
+The issue is public. Before you send it, remove tokens, cookies, passwords, and private URLs from the report and from logs.
+
 ## Roadmap
 
 Refer to [docs/roadmap.md](docs/roadmap.md).

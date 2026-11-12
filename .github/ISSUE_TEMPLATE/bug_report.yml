@@ -1,0 +1,97 @@
+name: Bug report
+description: Report a crash or another bug in NetworkTrail.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for the report. Before you send it:
+        - Search the existing issues. If an issue for the same bug exists, add your data there.
+        - Build NetworkTrail from the latest `main` and try again.
+        - **This issue is public.** Remove tokens, cookies, passwords, and private URLs from logs and screenshots.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: What went wrong?
+      placeholder: NetworkTrail stops when I select a request with an image body.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: part
+    attributes:
+      label: Part
+      description: Which part has the problem?
+      options:
+        - Mac app
+        - My iOS app in the Simulator (with the NetworkTrail snippet)
+        - Setup or build
+        - Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: commit
+    attributes:
+      label: NetworkTrail commit
+      description: Run `git rev-parse --short HEAD` in your NetworkTrail folder. Each build shows version 1.0 (1), so only the commit tells which code ran.
+      placeholder: a0e494d
+    validations:
+      required: true
+
+  - type: input
+    id: macos-version
+    attributes:
+      label: macOS version
+      placeholder: macOS 27.0
+    validations:
+      required: true
+
+  - type: input
+    id: xcode-version
+    attributes:
+      label: Xcode version
+      placeholder: Xcode 27.0
+    validations:
+      required: true
+
+  - type: input
+    id: simulator
+    attributes:
+      label: Simulator and iOS version
+      placeholder: iPhone 18 Pro, iOS 27.0
+    validations:
+      required: true
+
+  - type: textarea
+    id: crash-log
+    attributes:
+      label: Crash log
+      description: |
+        Only for a crash. macOS keeps each crash report in the Console app, in **Crash Reports**, and in the folder `~/Library/Logs/DiagnosticReports`:
+        - The Mac app: `NetworkTrail-<date>.ips`
+        - Your iOS app in the Simulator: `<app name>-<date>.ips`. When your app runs from Xcode, Xcode also shows the stack in the debugger.
+
+        Paste the full report. If it is too long, put the `.ips` file in a `.zip` file and attach it here.
+      placeholder: Paste the crash report here.
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Run DemoApp in the Simulator and tap Run all.
+        2. Select the Image request.
+
+        Expected: the image shows in the inspector.
+        Actual: NetworkTrail stops.
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Screenshots, logs, or other data that can help.
