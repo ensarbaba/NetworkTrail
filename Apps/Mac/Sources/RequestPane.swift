@@ -76,12 +76,20 @@ struct RequestPane: View {
             }
 
             Divider()
-            Button("Setup Snippet") {
-                store.isShowingSetupSnippet = true
+            HStack {
+                Button("Setup Snippet") {
+                    store.isShowingSetupSnippet = true
+                }
+                .controlSize(.small)
+                .help("Show the snippet that adds NetworkTrail to an iOS app")
+                Spacer()
+                // The credit for Pulse, which records the traffic in the framework that the snippet loads:
+                // small and at the end of the bar. The Pulse license is in Credits.rtf (About NetworkTrail).
+                Text("Powered by [Pulse](https://github.com/kean/Pulse)")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .help("NetworkTrail uses the open-source library Pulse by Alexander Grebenyuk.")
             }
-            .controlSize(.small)
-            .help("Show the snippet that adds NetworkTrail to an iOS app")
-            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(.bar)
