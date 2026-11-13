@@ -5,6 +5,11 @@ import NetworkTrailWire
 /// The setting in the Settings window that shows the menu bar item. Off by default: the user decides.
 enum MenuBarItemSetting {
     static let key = "menuBar.showsItem"
+
+    /// The saved value, for code outside SwiftUI views.
+    static var isShown: Bool {
+        UserDefaults.standard.bool(forKey: key)
+    }
 }
 
 /// The menu of the menu bar item: the apps with their request counts, then the window commands.
@@ -90,11 +95,10 @@ enum MainWindow {
     /// so that the menu never makes a second window.
     @MainActor
     static func show(using openWindow: OpenWindowAction) {
+        // The Dock icon comes back with the window (`AppDelegate.updateActivationPolicy()`).
+        NSApp.setActivationPolicy(.regular)
         NSApp.activate()
-        let window = NSApp.windows.first { window in
-            window.identifier?.rawValue.hasPrefix(id) == true && (window.isVisible || window.isMiniaturized)
-        }
-        guard let window else {
+        guard let window = openRequestWindow else {
             openWindow(id: id)
             return
         }
@@ -102,5 +106,19 @@ enum MainWindow {
             window.deminiaturize(nil)
         }
         window.makeKeyAndOrderFront(nil)
+    }
+
+    /// The request window when it is on screen or in the Dock. Nil after the user closed it.
+    @MainActor
+    static var openRequestWindow: NSWindow? {
+        NSApp.windows.first { window in
+            isRequestWindow(window) && (window.isVisible || window.isMiniaturized)
+        }
+    }
+
+    /// True for a window of the `WindowGroup`, not for the Settings window or the menu bar menu.
+    @MainActor
+    static func isRequestWindow(_ window: NSWindow) -> Bool {
+        window.identifier?.rawValue.hasPrefix(id) == true
     }
 }

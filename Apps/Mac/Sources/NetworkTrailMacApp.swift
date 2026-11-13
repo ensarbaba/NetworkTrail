@@ -4,17 +4,25 @@ import SwiftUI
 /// Mac app entry: one window, one `SessionStore`, `SessionScreen` as the root view.
 /// Also the Settings window and the optional menu bar item.
 ///
-/// Starts the listener when the window appears. Follows the system appearance.
+/// `AppDelegate` owns the store and starts the listener at launch. Follows the system appearance.
 @main
 struct NetworkTrailMacApp: App {
-    @State private var store = SessionStore()
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @AppStorage(MenuBarItemSetting.key) private var showsMenuBarItem = false
+
+    private var store: SessionStore {
+        appDelegate.store
+    }
 
     var body: some Scene {
         WindowGroup(id: MainWindow.id) {
             SessionScreen()
                 .environment(store)
-                .onAppear { store.startListening() }
+                .onAppear { appDelegate.requestWindowDidAppear() }
+        }
+        // Reads the setting only: no write back (see `menuBarItemInserted`).
+        .onChange(of: showsMenuBarItem) { _, isShown in
+            appDelegate.menuBarItemSettingDidChange(isShown: isShown)
         }
         .commands {
             CommandGroup(replacing: .newItem) {
