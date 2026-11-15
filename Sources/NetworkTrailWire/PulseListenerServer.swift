@@ -134,6 +134,8 @@ private final class ClientConnection {
     private var buffer = Data()
     private var clientID: String?
     private var clientLaunchedAt: Date?
+    /// The start of each call in flight. Pulse gives a completed event the date of its end.
+    private var startDates: [UUID: Date] = [:]
     private var pingTask: Task<Void, Never>?
     private var isClosed = false
 
@@ -227,6 +229,7 @@ private final class ClientConnection {
         case .storeEventNetworkTaskCreated:
             if let event = try? JSONDecoder().decode(LoggerStore.Event.NetworkTaskCreated.self, from: packet.body),
                let clientID, let clientLaunchedAt {
+                startDates[event.taskId] = event.createdAt
                 let request = CapturedRequest(
                     id: event.taskId,
                     clientID: clientID,
@@ -254,7 +257,8 @@ private final class ClientConnection {
                     id: event.taskId,
                     clientID: clientID,
                     clientLaunchedAt: clientLaunchedAt,
-                    createdAt: event.createdAt,
+                    createdAt: startDates.removeValue(forKey: event.taskId)
+                        ?? event.metrics?.taskInterval.start ?? event.createdAt,
                     method: event.originalRequest.httpMethod ?? "GET",
                     url: event.originalRequest.url?.absoluteString ?? "",
                     statusCode: status,
