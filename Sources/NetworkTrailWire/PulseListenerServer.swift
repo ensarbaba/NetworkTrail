@@ -195,24 +195,22 @@ private final class ClientConnection {
     }
 
     /// Append bytes, then `PulsePacketCodec.decode` as many complete packets as we can.
-    /// Incomplete packets stay in `buffer` for the next chunk. Failed decode (`try?`) drops that attempt.
-    private func process(data freshData: Data) {
-        var freshData = freshData
-        if buffer.isEmpty {
-            while let (packet, size) = try? PulsePacketCodec.decode(buffer: freshData) {
-                handle(packet: packet)
-                if size == freshData.count { return }
-                freshData.removeFirst(size)
-            }
-        }
-        if !freshData.isEmpty {
-            buffer.append(freshData)
-            while let (packet, size) = try? PulsePacketCodec.decode(buffer: buffer) {
+    /// An incomplete packet stays in `buffer` for the next chunk.
+    /// A packet that is too large or corrupt closes the connection.
+    private func process(data: Data) {
+        buffer.append(data)
+        do {
+            while true {
+                let (packet, size) = try PulsePacketCodec.decode(buffer: buffer)
                 handle(packet: packet)
                 buffer.removeFirst(size)
             }
-            if buffer.isEmpty { buffer = Data() }
+        } catch PulsePacketParsingError.notEnoughData {
+            // Wait for the next chunk.
+        } catch {
+            close()
         }
+        if buffer.isEmpty { buffer = Data() }
     }
 
     /// Handshake, heartbeat, and HTTP rows. Unknown codes and progress updates fall through `default` and are ignored.

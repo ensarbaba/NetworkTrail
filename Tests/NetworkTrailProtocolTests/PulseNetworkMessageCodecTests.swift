@@ -46,6 +46,21 @@ struct PulseNetworkMessageCodecTests {
         #expect(decoded.responseBody == Data("pong".utf8))
     }
 
+    @Test func lengthAboveTheLimitIsNotAPacket() {
+        // The first bytes of an HTTP request: the code is "P", and the length is "OST " (1.3 GB).
+        #expect(throws: PulsePacketParsingError.unsupportedContentSize) {
+            _ = try PulsePacketCodec.decode(buffer: Data("POST / HTTP/1.1\r\n\r\n".utf8))
+        }
+    }
+
+    @Test func incompletePacketNeedsMoreData() throws {
+        let packet = try PulsePacketCodec.encode(code: PulsePacketCode.ping.rawValue, body: Data("ping".utf8))
+
+        #expect(throws: PulsePacketParsingError.notEnoughData) {
+            _ = try PulsePacketCodec.decode(buffer: packet.dropLast())
+        }
+    }
+
     private func makeEvent(requestBody: Data?, responseBody: Data?) -> LoggerStore.Event.NetworkTaskCompleted {
         let url = URL(string: "https://example.com/post")!
         var request = URLRequest(url: url)

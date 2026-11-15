@@ -27,8 +27,8 @@ package enum PulsePacketCode: UInt8 {
     case message = 13
 }
 
-/// Why reading a packet failed: truncated buffer, or a body too large to encode.
-enum PulsePacketParsingError: Error {
+/// Why reading a packet failed: truncated buffer, or a body that is too large.
+package enum PulsePacketParsingError: Error {
     case notEnoughData
     case unsupportedContentSize
 }
@@ -43,6 +43,10 @@ package struct PulsePacket {
 ///
 /// On the wire a packet is: 1 type byte, 4-byte big-endian length, then a compressed body.
 package enum PulsePacketCodec {
+    /// The largest compressed body that `decode` accepts. A larger length is not a packet of the SDK:
+    /// for example, the first bytes of an HTTP request read as a length of more than 1 GB.
+    package static let maximumBodySize = 256 * 1024 * 1024
+
     /// Build a packet: compress `body`, then prefix type and length.
     package static func encode(code: UInt8, body: Data) throws -> Data {
         guard body.count < UInt32.max else {
@@ -64,6 +68,9 @@ package enum PulsePacketCodec {
         }
         let code = buffer[buffer.startIndex]
         let contentSize = UInt32(bigEndianData: buffer.fromIndex(1, size: 4))
+        guard Int(contentSize) <= maximumBodySize else {
+            throw PulsePacketParsingError.unsupportedContentSize
+        }
         let compressedLength = headerSize + Int(contentSize)
         guard buffer.count >= compressedLength else {
             throw PulsePacketParsingError.notEnoughData
