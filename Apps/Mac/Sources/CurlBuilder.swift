@@ -3,10 +3,9 @@ import NetworkTrailWire
 
 /// Builds a `curl` command the user can paste in Terminal from one captured HTTP request.
 ///
-/// Uses method, URL, request headers, and UTF-8 body. Binary bodies are not inlined;
-/// the string tells you to copy that body another way.
+/// Uses method, URL, request headers, and body. A binary body is base64 text that the shell decodes.
 enum CurlBuilder {
-    /// One-line `curl -X …` with quoted URL, `-H` headers, and `-d` body when it is text.
+    /// One-line `curl -X` with quoted URL, `-H` headers, and the body.
     static func make(from request: CapturedRequest) -> String {
         var parts = ["curl -X \(shellEscape(request.method))"]
         parts.append(shellEscape(request.url))
@@ -18,9 +17,11 @@ enum CurlBuilder {
 
         if let body = request.requestBody, !body.isEmpty {
             if let string = String(data: body, encoding: .utf8) {
-                parts.append("-d \(shellEscape(string))")
+                // Not `-d`: it reads a file when the body starts with "@".
+                parts.append("--data-raw \(shellEscape(string))")
             } else {
-                parts.append("--data-binary @<(base64 decode omitted — copy body separately)")
+                // The shell decodes the bytes, and curl reads them as a file (zsh and bash).
+                parts.append("--data-binary @<(echo '\(body.base64EncodedString())' | base64 --decode)")
             }
         }
 
