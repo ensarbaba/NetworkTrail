@@ -7,17 +7,20 @@ NetworkTrail is a work in progress. This file shows the plan. The plan can chang
 - Capture of `URLSession` traffic from Debug apps in the iOS Simulator, with one snippet
 - A Mac app with a sidebar of apps, a request table, an inspector, search, and Clear
 - A Setup Snippet sheet that shows the snippet and the steps
+- Start, Size, and Date columns, and a menu to show or hide each column
+- A line in the table that shows a new launch of an app
+- An inspector with a header, tabs for the request and the response, headers, and query parameters
+- A body viewer for JSON and images
+- Health checks for failed requests, slow requests, and duplicate requests
+- Pause for the live table
+- A first-run screen, and Retry when the Mac app cannot listen
+- Copy Request and Response: a request and its response as text
+- A Hosts filter that hides the requests to the hosts that you select
+- An optional menu bar item, and a start when you log in
 
 ## Next, for the first release
 
-1. Start and Size columns, and a menu to show or hide each column
-2. A line in the table that shows a new launch of an app
-3. A new inspector with a header, tabs for the response and the request, headers, and query parameters
-4. A body viewer for JSON and images
-5. Health checks for failed requests, slow requests, and duplicate requests
-6. Pause for the live table
-7. A first-run screen, and Retry when the Mac app cannot listen
-8. Copy a request or a session as text for an AI chat
+1. A local MCP server, so that AI coding agents can read the captured requests
 
 ## Later
 
