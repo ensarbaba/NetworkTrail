@@ -10,15 +10,20 @@ NetworkTrail is a Mac app. It shows the `URLSession` traffic of a Debug iOS app 
 
 ## What works now
 
-- A live table of requests with status, method, host, path, and duration
-- An inspector for each request: URL, headers, bodies, and Copy as cURL
+- A live table of requests with start time, status, method, host, path, size, and duration. You can show or hide each column, except Status and Path.
+- A line in the table shows where an app started again.
+- An inspector for each request: URL, query parameters, headers, and bodies. JSON bodies have colors, and image bodies show as images.
+- Copy URL, Copy as cURL, and Copy Request and Response
+- Filters for failed, slow, and duplicate requests. You can change the limits for slow and duplicate requests.
+- A Hosts filter that hides the requests to the hosts that you select
+- Search, Pause, and Clear for one app or for all apps
 - One sidebar row for each app in each Simulator. An app stays in the list after it disconnects.
-- Search, and Clear for one app or for all apps
+- An optional menu bar item. With the menu bar item, NetworkTrail can also start when you log in.
 
 ## Requirements
 
 - macOS 14 or later
-- Xcode 16 or later
+- Xcode 26 or later
 - iOS 17 or later in the Simulator
 
 ## Build the Mac app
@@ -61,6 +66,8 @@ The requests show in NetworkTrail. Each row in DemoApp shows the last result of 
 ## How it works
 
 The snippet loads `NetworkTrailDebug.framework` into your app. The framework uses [Pulse](https://github.com/kean/Pulse) to record the `URLSession` traffic. Then it sends the records to the Mac app on `127.0.0.1:43000`.
+
+Pulse also saves the traffic on disk, in the data container of your app: `Library/Logs/com.github.kean.logger`. By default, Pulse keeps up to 256 MB there and removes data after 14 days. NetworkTrail does not read this copy.
 
 An app in the iOS Simulator runs on your Mac. For that app, the address `127.0.0.1` is the Mac. The Mac app listens only on `127.0.0.1`. Other computers cannot connect to it.
 
